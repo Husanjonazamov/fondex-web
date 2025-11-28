@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  emart_web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: emart_web
+    restart: unless-stopped
+    tty: true
+    working_dir: /var/www
+    environment:
+      SERVICE_NAME: emart_web
+      SERVICE_TAGS: dev
+      DB_CONNECTION: ${DB_CONNECTION}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - .:/var/www
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - emart_web
+    depends_on:
+      - mariadb
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    container_name: emart_web_nginx
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8092:80"
+    volumes:
+      - .:/var/www
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - emart_web
+    depends_on:
+      - emart_web
+
+  mariadb:
+    image: mariadb:latest
+    container_name: emart_web_db
+    restart: unless-stopped
+    tty: true
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD} 
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mariadb:/var/lib/mysql
+    networks:
+      - emart_web
+
+networks:
+  emart_web:
+    driver: bridge
+
+volumes:
+  mariadb:
+    driver: local
