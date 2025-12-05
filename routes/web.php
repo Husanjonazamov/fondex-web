@@ -130,6 +130,8 @@ Route::post('sendnotification', [VendorController::class, 'sendnotification'])->
 Route::post('setToken', [AjaxController::class, 'setToken'])->name('setToken');
 Route::post('logout', [AjaxController::class, 'logout'])->name('logout');
 Route::post('newRegister', [AjaxController::class, 'newRegister'])->name('newRegister');
+Route::post('confirmOtp', [AjaxController::class, 'confirmOtp'])->name('confirmOtp');
+
 Route::post('checkEmail', [App\Http\Controllers\Auth\AjaxController::class, 'checkEmail'])->name('checkEmail');
 Route::post('sendemail/send', [SendEmailController::class, 'send'])->name('sendContactUsMail');
 Route::get('my_order/{id}', [OrderController::class, 'edit'])->name('orderDetails');

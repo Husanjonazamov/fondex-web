@@ -11,6 +11,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\VendorUsers;
+use App\Http\Services\SmsServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -128,26 +129,88 @@ class AjaxController extends Controller
         return $data1;
     }
 
+
     public function newRegister(Request $request)
     {
         $userId = $request->userId;
+        $emailOrPhone = $request->email;
         $password = $request->password;
+
+        // User yaratish
         $user = User::create([
-            'name' => $request->email,
-            'email' => $request->email,
+            'name' => $emailOrPhone,
+            'email' => $emailOrPhone,
             'password' => Hash::make($password),
         ]);
+
+        // vendor_users jadvalga kiritish
         DB::table('vendor_users')->insert([
             'user_id' => $user->id,
             'uuid' => $userId,
-            'email' => $request->email,
+            'email' => $emailOrPhone,
         ]);
-        $user = User::where('email', $request->email)->first();
-        Auth::login($user, true);
-        $signupdata = array();
-        if (Auth::check()) {
-            $signupdata['access'] = true;
+
+        // Agar phone bo'lsa OTP yuborish
+        if (preg_match('/^\+998\d{9}$/', $emailOrPhone)) {
+            $otp = rand(100000, 999999);
+            $user->verification_code = $otp;
+            $user->save();
+
+            try {
+                (new \App\Http\Services\SmsServices())->phoneVerificationSms($emailOrPhone, $otp);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send OTP on register', [
+                    'phone' => $emailOrPhone,
+                    'otp' => $otp,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
+            Auth::login($user, true);
+
+            return response()->json([
+                'message' => 'User registered. OTP sent to phone.',
+                'otp' => $otp, // test uchun, productionda yubormaymiz
+                'access' => true
+            ]);
         }
-        return $signupdata;
+
+        // Email bo'lsa, oddiy login
+        Auth::login($user, true);
+
+        return response()->json([
+            'message' => 'User registered with email.',
+            'access' => true
+        ]);
     }
+
+
+    public function confirmOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required',        // email yoki phone
+            'otp'   => 'required|digits:6',
+        ]);
+
+        // Foydalanuvchini topamiz
+        $user = User::where('email', $request->email)
+                    ->where('verification_code', $request->otp)
+                    ->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Invalid OTP'], 422);
+        }
+
+        // Tasdiqlash flagini o‘rnatamiz
+        $user->email_or_otp_verified = 1;
+        $user->verification_code = null; // OTP ishlatildi, o‘chiramiz
+        $user->save();
+
+        return response()->json([
+            'message' => 'Phone verified successfully',
+            'access' => true
+        ]);
+    }
+
+
 }

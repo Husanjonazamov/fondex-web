@@ -8,6 +8,7 @@
         "php": "^8.1",
         "google/apiclient": "^2.16",
         "guzzlehttp/guzzle": "^7.2",
+        "jscorptech/payme": "^0.5.0",
         "laravel/framework": "^10.0",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
@@ -15,7 +16,7 @@
         "perfectmak/paystack-php": "dev-master",
         "razorpay/razorpay": "2.*",
         "stripe/stripe-php": "^7.113",
-         "xendit/xendit-php": "^6.0"
+        "xendit/xendit-php": "^6.0"
     },
     "require-dev": {
       "spatie/laravel-ignition": "^2.0",
