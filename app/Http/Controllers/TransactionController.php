@@ -12,6 +12,8 @@ use Xendit\Invoice\InvoiceApi;
 use Xendit\Invoice\CreateInvoiceRequest;
 use Xendit\XenditSdkException;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
+
 
 class TransactionController extends Controller
 {
@@ -615,4 +617,30 @@ class TransactionController extends Controller
     public function failed() {
         echo "failed payment";
     } 
+    public function walletProcessPaymeLink(Request $request)
+    {
+        $user = Auth::user();
+
+        $order = new \JscorpTech\Payme\Models\Order();
+        $order->user_id = $user->id;
+        $order->amount = $request->amount * 100; 
+        $order->save();
+
+        Log::info('Yangi Payme order yaratildi', [
+            'order_id' => $order->id,
+            'user_id'  => $order->user_id,
+            'amount'   => $order->amount,
+        ]);
+
+        // Payme link generatsiya
+        $paymeService = new \App\Services\PaymeService();
+        $payme_link = $paymeService->generate_link($order);
+
+        return response()->json([
+            'status' => true,
+            'link' => $payme_link
+        ]);
+    }
+
+
 }

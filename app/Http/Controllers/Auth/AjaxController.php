@@ -206,11 +206,24 @@ class AjaxController extends Controller
         $user->verification_code = null; // OTP ishlatildi, o‘chiramiz
         $user->save();
 
+        // Foydalanuvchini login qilamiz
+        Auth::login($user, true);
+
+        // Token yaratish (Sanctum ishlatilsa)
+        $token = $user->createToken('auth-token')->plainTextToken;
+
         return response()->json([
             'message' => 'Phone verified successfully',
-            'access' => true
+            'access' => true,
+            'token' => $token, // shu tokenni client saqlaydi
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+                'name' => $user->name,
+            ]
         ]);
     }
+
 
 
 }

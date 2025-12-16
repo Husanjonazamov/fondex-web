@@ -30,6 +30,9 @@ use App\Http\Controllers\TrendingController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\PayLaterServiceChargeController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Payment_Methods\PaymeMerchantApiView;
+use App\Http\Controllers\Payment_Methods\PaymeController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -207,3 +210,8 @@ Route::post('razorpaywalletpayment', [App\Http\Controllers\TransactionController
 Route::post('wallet-process-mercadopago', [App\Http\Controllers\TransactionController::class, 'processMercadoPagoPayment'])->name('wallet-process-mercadopago');
 Route::get('wallet-success', [App\Http\Controllers\TransactionController::class, 'success'])->name('wallet-success');
 Route::get('wallet-notify', [App\Http\Controllers\TransactionController::class, 'notify'])->name('wallet-notify');
+Route::post('wallet-process-payme', [App\Http\Controllers\Payment_Methods\PaymeController::class, 'pay'])->name('wallet-process-payme');
+Route::get('wallet-payme-success', [App\Http\Controllers\TransactionController::class, 'paymeSuccess'])->name('wallet-payme-success');
+
+Route::post('/wallet-payme-link', [App\Http\Controllers\TransactionController::class, 'walletProcessPaymeLink'])
+     ->name('wallet-payme-link');

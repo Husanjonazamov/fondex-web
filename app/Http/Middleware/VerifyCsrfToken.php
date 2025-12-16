@@ -13,6 +13,8 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         'newRegister',
-        'confirmOtp'
+        'wallet-payme-link',
+        'confirmOtp',
+        'setToken'
     ];
 }

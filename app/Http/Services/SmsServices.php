@@ -37,7 +37,7 @@ class SmsServices
 
     public function phoneVerificationSms($to, $code)
     {
-        $sms = "karvonmarket.uz sayti va mobil ilovasiga ro'yxatdan o'tish uchun tasdiqlash kodi: $code";
+        $sms = "Fondex.uz mobil ilovasi uchun tasdiqlash kodi/ Код подтверждения: $code";
         $service = new SendService();
 
         try {
