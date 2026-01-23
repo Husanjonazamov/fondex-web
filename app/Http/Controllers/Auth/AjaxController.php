@@ -154,12 +154,19 @@ class AjaxController extends Controller
                 'uuid' => $userId,
                 'email' => $emailOrPhone,
             ]);
+        } else {
+            // Agar rolni hali belgilanmagan bo'lsa (yoki foydalanuvchi hali tasdiqlanmagan bo'lsa), rolni yangilaymiz
+            if ((empty($user->role) || $user->email_or_otp_verified == 0) && $role) {
+                $user->role = $role;
+                $user->save();
+            }
         }
 
         // Agar phone bo'lsa OTP yuborish
         if (preg_match('/^\+998\d{9}$/', $emailOrPhone)) {
             $otp = rand(100000, 999999);
             $user->verification_code = $otp;
+            $user->verification_code_at = now();
             $user->save();
 
             try {
@@ -209,8 +216,18 @@ class AjaxController extends Controller
             return response()->json(['message' => 'Invalid OTP'], 422);
         }
 
+        // Muddatini tekshirish (60 sekund)
+        if ($user->verification_code_at && $user->verification_code_at->diffInSeconds(now()) > 60) {
+            return response()->json(['message' => 'OTP expiration (60 seconds)'], 422);
+        }
+
         // is_new aniqlash: agar email_or_otp_verified 0 bo'lsa, demak bu birinchi marta kirishi
         $isNew = $user->email_or_otp_verified == 0;
+
+        // Agar rolni hali belgilanmagan bo'lsa (yoki is_new bo'lsa), rolni yangilaymiz
+        if (($isNew || empty($user->role)) && $request->has('role')) {
+            $user->role = $request->role;
+        }
 
         // Tasdiqlash flagini o‘rnatamiz
         $user->email_or_otp_verified = 1;

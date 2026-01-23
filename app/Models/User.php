@@ -26,6 +26,7 @@ class User extends Authenticatable
         'verification_code',
         'email_or_otp_verified',
         'role',
+        'verification_code_at',
     ];
     /**
      * The attributes that should be hidden for serialization.
@@ -43,6 +44,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'verification_code_at' => 'datetime',
     ];
 
     public function getvendorId()
