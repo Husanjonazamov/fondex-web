@@ -135,20 +135,26 @@ class AjaxController extends Controller
         $userId = $request->userId;
         $emailOrPhone = $request->email;
         $password = $request->password;
+        $role = $request->role;
 
-        // User yaratish
-        $user = User::create([
-            'name' => $emailOrPhone,
-            'email' => $emailOrPhone,
-            'password' => Hash::make($password),
-        ]);
-
-        // vendor_users jadvalga kiritish
-        DB::table('vendor_users')->insert([
-            'user_id' => $user->id,
-            'uuid' => $userId,
-            'email' => $emailOrPhone,
-        ]);
+        // Userni topamiz yoki yaratamiz
+        $user = User::where('email', $emailOrPhone)->first();
+        
+        if (!$user) {
+            $user = User::create([
+                'name' => $emailOrPhone,
+                'email' => $emailOrPhone,
+                'password' => Hash::make($password),
+                'role' => $role,
+            ]);
+            
+            // vendor_users jadvalga kiritish (agar kerak bo'lsa)
+            DB::table('vendor_users')->insert([
+                'user_id' => $user->id,
+                'uuid' => $userId,
+                'email' => $emailOrPhone,
+            ]);
+        }
 
         // Agar phone bo'lsa OTP yuborish
         if (preg_match('/^\+998\d{9}$/', $emailOrPhone)) {
@@ -192,8 +198,10 @@ class AjaxController extends Controller
             'otp'   => 'required|digits:6',
         ]);
 
+        $emailOrPhone = $request->email;
+
         // Foydalanuvchini topamiz
-        $user = User::where('email', $request->email)
+        $user = User::where('email', $emailOrPhone)
                     ->where('verification_code', $request->otp)
                     ->first();
 
@@ -201,9 +209,13 @@ class AjaxController extends Controller
             return response()->json(['message' => 'Invalid OTP'], 422);
         }
 
+        // is_new aniqlash: agar email_or_otp_verified 0 bo'lsa, demak bu birinchi marta kirishi
+        $isNew = $user->email_or_otp_verified == 0;
+
         // Tasdiqlash flagini o‘rnatamiz
         $user->email_or_otp_verified = 1;
-        $user->verification_code = null; // OTP ishlatildi, o‘chiramiz
+        $user->verification_code = null; 
+        
         $user->save();
 
         // Foydalanuvchini login qilamiz
@@ -213,14 +225,9 @@ class AjaxController extends Controller
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Phone verified successfully',
-            'access' => true,
-            'token' => $token, // shu tokenni client saqlaydi
-            'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
-                'name' => $user->name,
-            ]
+            'sucsses' => 'ok',
+            'is_new'  => $isNew ? 'true' : 'false',
+            'role'    => $user->role ?? '',
         ]);
     }
 
