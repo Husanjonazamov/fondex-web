@@ -105,46 +105,33 @@ class PaymentStatusController extends Controller
     private function syncOrderFromTransaction($order, $transaction)
     {
         try {
-            DB::beginTransaction();
-            
             // Order holatini yangilash
             $order->state = 2; // To'langan
             $order->save();
             
-            // Payment request ni topish va yangilash
-            $paymentRequest = PaymentRequest::where('order_id', $order->id)->first();
+            Log::info('Order synced from transaction', [
+                'order_id' => $order->id,
+                'transaction_id' => $transaction->id,
+                'new_state' => $order->state
+            ]);
             
-            if ($paymentRequest) {
-                $paymentRequest->is_paid = 1;
-                $paymentRequest->payment_method = 'payme';
-                $paymentRequest->save();
+            // Foydalanuvchi balansini to'ldirish (wallet uchun)
+            if (isset($order->type) && $order->type === 'wallet' && isset($order->user_id)) {
+                $user = User::find($order->user_id);
+                if ($user) {
+                    $amountInSum = $order->amount / 100;
+                    $user->wallet_balance = ($user->wallet_balance ?? 0) + $amountInSum;
+                    $user->save();
 
-                // Foydalanuvchi balansini to'ldirish (wallet uchun)
-                if ($order->type === 'wallet' && isset($order->user_id)) {
-                    $user = User::find($order->user_id);
-                    if ($user) {
-                        $amountInSum = $order->amount / 100;
-                        $user->wallet_balance = ($user->wallet_balance ?? 0) + $amountInSum;
-                        $user->save();
-
-                        Log::info('Wallet Balance Updated via sync', [
-                            'user_id' => $user->id,
-                            'amount' => $amountInSum,
-                            'new_balance' => $user->wallet_balance
-                        ]);
-                    }
+                    Log::info('Wallet Balance Updated via sync', [
+                        'user_id' => $user->id,
+                        'amount' => $amountInSum,
+                        'new_balance' => $user->wallet_balance
+                    ]);
                 }
             }
             
-            DB::commit();
-            
-            Log::info('Order synced from transaction', [
-                'order_id' => $order->id,
-                'transaction_id' => $transaction->id
-            ]);
-            
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Sync order from transaction failed', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage()
