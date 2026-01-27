@@ -3,13 +3,18 @@
 namespace App\Http\Controllers;
 
 use JscorpTech\Payme\Models\Order;
+use JscorpTech\Payme\Models\Transaction;
+use App\Models\PaymentRequest;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class PaymentStatusController extends Controller
 {
     /**
      * To'lov statusini tekshirish API
+     * Transaction jadvalidan ham tekshiradi va order ni sinxronlaydi
      * 
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -37,6 +42,26 @@ class PaymentStatusController extends Controller
                 ], 404);
             }
 
+            // Transaction jadvalidan tekshirish - callback kelmagan bo'lsa ham ishlaydi
+            $transaction = Transaction::where('order_id', $orderId)
+                ->orderBy('id', 'desc')
+                ->first();
+            
+            // Agar transaction completed (state=2) va order hali yangilanmagan bo'lsa
+            if ($transaction && $transaction->state == 2 && $order->state != 2) {
+                Log::info('Syncing order state from transaction', [
+                    'order_id' => $orderId,
+                    'transaction_state' => $transaction->state,
+                    'order_state' => $order->state
+                ]);
+                
+                // Order ni yangilash
+                $this->syncOrderFromTransaction($order, $transaction);
+                
+                // Order ni qayta yuklash
+                $order->refresh();
+            }
+
             // To'lov statusini aniqlash (state: 0=pending, 1=processing, 2=paid, -1=cancelled)
             $status = match($order->state) {
                 0 => 'pending',
@@ -55,6 +80,8 @@ class PaymentStatusController extends Controller
                 'is_paid' => $isPaid,
                 'amount' => $order->amount / 100, // tiyindan so'mga
                 'user_id' => $order->user_id,
+                'transaction_id' => $transaction?->id,
+                'transaction_state' => $transaction?->state,
                 'created_at' => $order->created_at,
                 'updated_at' => $order->updated_at
             ], 200);
@@ -69,6 +96,59 @@ class PaymentStatusController extends Controller
                 'success' => false,
                 'message' => 'Xatolik yuz berdi'
             ], 500);
+        }
+    }
+    
+    /**
+     * Transaction asosida order ni sinxronlash
+     */
+    private function syncOrderFromTransaction($order, $transaction)
+    {
+        try {
+            DB::beginTransaction();
+            
+            // Order holatini yangilash
+            $order->state = 2; // To'langan
+            $order->save();
+            
+            // Payment request ni topish va yangilash
+            $paymentRequest = PaymentRequest::where('order_id', $order->id)->first();
+            
+            if ($paymentRequest) {
+                $paymentRequest->is_paid = 1;
+                $paymentRequest->payment_method = 'payme';
+                $paymentRequest->save();
+
+                // Foydalanuvchi balansini to'ldirish (wallet uchun)
+                if ($order->type === 'wallet' && isset($order->user_id)) {
+                    $user = User::find($order->user_id);
+                    if ($user) {
+                        $amountInSum = $order->amount / 100;
+                        $user->wallet_balance = ($user->wallet_balance ?? 0) + $amountInSum;
+                        $user->save();
+
+                        Log::info('Wallet Balance Updated via sync', [
+                            'user_id' => $user->id,
+                            'amount' => $amountInSum,
+                            'new_balance' => $user->wallet_balance
+                        ]);
+                    }
+                }
+            }
+            
+            DB::commit();
+            
+            Log::info('Order synced from transaction', [
+                'order_id' => $order->id,
+                'transaction_id' => $transaction->id
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Sync order from transaction failed', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
