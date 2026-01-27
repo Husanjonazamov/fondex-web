@@ -19,7 +19,7 @@ class TransactionController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('auth')->except(['walletProcessPaymeLink']);
     }
 
     public function index()
@@ -619,7 +619,21 @@ class TransactionController extends Controller
     } 
     public function walletProcessPaymeLink(Request $request)
     {
-        $user = Auth::user();
+        $request->validate([
+            'phone' => 'required|string',
+            'amount' => 'required|numeric|min:1',
+        ]);
+
+        // Telefon raqam orqali foydalanuvchini topamiz
+        $phone = $request->phone;
+        $user = \App\Models\User::where('email', $phone)->first();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Foydalanuvchi topilmadi'
+            ], 404);
+        }
 
         $order = new \JscorpTech\Payme\Models\Order();
         $order->user_id = $user->id;
@@ -629,6 +643,7 @@ class TransactionController extends Controller
         Log::info('Yangi Payme order yaratildi', [
             'order_id' => $order->id,
             'user_id'  => $order->user_id,
+            'phone'    => $phone,
             'amount'   => $order->amount,
         ]);
 

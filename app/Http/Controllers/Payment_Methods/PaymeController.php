@@ -58,7 +58,9 @@ class PaymeController extends Controller
         $amount =  (currencyConverter($payment->payment_amount, "uzs")
             + $delivery_price) * 100;
         $order = Order::query()->create([
+            "user_id" => $payment->user_id ?? $data->customer_id,
             "amount" => $amount,
+            "type" => "wallet",
         ]);
         $payment->order_id = $order->id;
         $payment->delivery_price = $delivery_price;

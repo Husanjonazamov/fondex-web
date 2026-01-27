@@ -48,6 +48,8 @@ services:
     container_name: emart_web_db
     restart: unless-stopped
     tty: true
+    ports:
+      - "3307:3306"
     environment:
       MARIADB_ROOT_PASSWORD: ${DB_PASSWORD} 
       MARIADB_DATABASE: ${DB_DATABASE}
