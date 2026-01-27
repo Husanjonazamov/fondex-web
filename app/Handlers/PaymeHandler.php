@@ -26,7 +26,7 @@ class PaymeHandler
             $order = $transaction->order;
             
             // Order holatini yangilash
-            $order->state = 1; // To'langan
+            $order->state = 2; // To'langan (paid)
             $order->save();
 
             // Payment request ni topish va yangilash

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PaymentRequest;
+use JscorpTech\Payme\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -17,44 +17,52 @@ class PaymentStatusController extends Controller
     public function checkPaymentStatus(Request $request)
     {
         try {
-            $paymentId = $request->input('payment_id');
+            $orderId = $request->input('order_id');
             
-            if (!$paymentId) {
+            if (!$orderId) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'payment_id majburiy'
+                    'message' => 'order_id majburiy'
                 ], 400);
             }
 
-            // Payment request ni topish
-            $paymentRequest = PaymentRequest::where('id', $paymentId)->first();
+            // Payme order ni topish
+            $order = Order::find($orderId);
             
-            if (!$paymentRequest) {
+            if (!$order) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'To\'lov topilmadi',
+                    'message' => 'Buyurtma topilmadi',
                     'payment_status' => 'not_found'
                 ], 404);
             }
 
-            // To'lov statusini aniqlash
-            $isPaid = $paymentRequest->is_paid == 1;
+            // To'lov statusini aniqlash (state: 0=pending, 1=processing, 2=paid, -1=cancelled)
+            $status = match($order->state) {
+                0 => 'pending',
+                1 => 'processing',
+                2 => 'paid',
+                -1, -2 => 'cancelled',
+                default => 'unknown'
+            };
+            
+            $isPaid = $order->state == 2;
             
             return response()->json([
                 'success' => true,
-                'payment_id' => $paymentRequest->id,
-                'payment_status' => $isPaid ? 'paid' : 'pending',
+                'order_id' => $order->id,
+                'payment_status' => $status,
                 'is_paid' => $isPaid,
-                'amount' => $paymentRequest->payment_amount ?? 0,
-                'payment_method' => $paymentRequest->payment_method ?? null,
-                'created_at' => $paymentRequest->created_at,
-                'updated_at' => $paymentRequest->updated_at
+                'amount' => $order->amount / 100, // tiyindan so'mga
+                'user_id' => $order->user_id,
+                'created_at' => $order->created_at,
+                'updated_at' => $order->updated_at
             ], 200);
 
         } catch (\Exception $e) {
             Log::error('Payment Status Check Error', [
                 'error' => $e->getMessage(),
-                'payment_id' => $request->input('payment_id')
+                'order_id' => $request->input('order_id')
             ]);
 
             return response()->json([
@@ -73,27 +81,44 @@ class PaymentStatusController extends Controller
     public function getUserPayments(Request $request)
     {
         try {
-            $userId = $request->input('user_id');
+            $phone = $request->input('phone');
             
-            if (!$userId) {
+            if (!$phone) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'user_id majburiy'
+                    'message' => 'phone majburiy'
                 ], 400);
             }
 
-            $payments = PaymentRequest::where('user_id', $userId)
+            // Telefon orqali user topish
+            $user = \App\Models\User::where('email', $phone)->first();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Foydalanuvchi topilmadi'
+                ], 404);
+            }
+
+            $payments = Order::where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->get()
-                ->map(function($payment) {
+                ->map(function($order) {
+                    $status = match($order->state) {
+                        0 => 'pending',
+                        1 => 'processing',
+                        2 => 'paid',
+                        -1, -2 => 'cancelled',
+                        default => 'unknown'
+                    };
+                    
                     return [
-                        'payment_id' => $payment->id,
-                        'payment_status' => $payment->is_paid == 1 ? 'paid' : 'pending',
-                        'is_paid' => $payment->is_paid == 1,
-                        'amount' => $payment->payment_amount ?? 0,
-                        'payment_method' => $payment->payment_method ?? null,
-                        'created_at' => $payment->created_at,
-                        'updated_at' => $payment->updated_at
+                        'order_id' => $order->id,
+                        'payment_status' => $status,
+                        'is_paid' => $order->state == 2,
+                        'amount' => $order->amount / 100,
+                        'created_at' => $order->created_at,
+                        'updated_at' => $order->updated_at
                     ];
                 });
 
@@ -106,7 +131,7 @@ class PaymentStatusController extends Controller
         } catch (\Exception $e) {
             Log::error('Get User Payments Error', [
                 'error' => $e->getMessage(),
-                'user_id' => $request->input('user_id')
+                'phone' => $request->input('phone')
             ]);
 
             return response()->json([
@@ -116,3 +141,4 @@ class PaymentStatusController extends Controller
         }
     }
 }
+
