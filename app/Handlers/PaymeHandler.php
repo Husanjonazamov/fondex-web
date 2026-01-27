@@ -23,11 +23,28 @@ class PaymeHandler
         try {
             DB::beginTransaction();
 
-            $order = $transaction->order;
+            // Order ni to'g'ridan-to'g'ri topish (relationship muammosini hal qilish uchun)
+            $orderClass = config('payme.order');
+            $order = $orderClass::find($transaction->order_id);
+            
+            if (!$order) {
+                Log::error('Payme Handler: Order not found', ['order_id' => $transaction->order_id]);
+                throw new \Exception('Order not found: ' . $transaction->order_id);
+            }
+            
+            Log::info('Payme Handler: Order found', [
+                'order_id' => $order->id,
+                'current_state' => $order->state
+            ]);
             
             // Order holatini yangilash
             $order->state = 2; // To'langan (paid)
             $order->save();
+            
+            Log::info('Payme Handler: Order state updated', [
+                'order_id' => $order->id,
+                'new_state' => $order->state
+            ]);
 
             // Payment request ni topish va yangilash
             $paymentRequest = PaymentRequest::where('order_id', $order->id)->first();
@@ -94,10 +111,16 @@ class PaymeHandler
         try {
             DB::beginTransaction();
 
-            $order = $transaction->order;
+            // Order ni to'g'ridan-to'g'ri topish
+            $orderClass = config('payme.order');
+            $order = $orderClass::find($transaction->order_id);
             
+            if (!$order) {
+                Log::error('Payme Cancel Handler: Order not found', ['order_id' => $transaction->order_id]);
+                throw new \Exception('Order not found: ' . $transaction->order_id);
+            }
             // Order holatini bekor qilish
-            $order->state = 2; // Bekor qilingan
+            $order->state = -1; // Bekor qilingan (cancelled)
             $order->save();
 
             // Agar to'lov allaqachon amalga oshirilgan bo'lsa va keyin bekor qilingan bo'lsa
