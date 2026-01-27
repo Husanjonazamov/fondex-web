@@ -54,8 +54,10 @@ class PaymeMerchantApiView extends PaymeApiView
                 "title" => "Wallet top-up",
                 "price" => $expectedAmount,
                 "count" => 1,
-                "code" => "10305008001000000",
-                "vat_percent" => 0
+                "code" => env('PAYME_IKPU_CODE'),
+                "units" => 796,
+                "vat_percent" => 0,
+                "package_code" => ""
             ]];
 
             Log::info('Payme CheckPerformTransaction SUCCESS', [
@@ -66,7 +68,7 @@ class PaymeMerchantApiView extends PaymeApiView
             return $this->success([
                 "allow" => true,
                 "detail" => [
-                    "receipt_type" => 1,
+                    "receipt_type" => 0,
                     "items" => $items
                 ]
             ]);
