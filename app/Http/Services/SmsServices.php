@@ -23,10 +23,10 @@ class SmsServices
                 Http::withHeaders([
                     'Authorization' => 'Basic ' . \base64_encode("$TWILIO_SID:$TWILIO_AUTH_TOKEN")
                 ])->asForm()->post("https://api.twilio.com/2010-04-01/Accounts/$TWILIO_SID/Messages.json", [
-                    "Body" => $text,
-                    "From" => env('VALID_TWILIO_NUMBER'),
-                    "To" => $to,
-                ]);
+                            "Body" => $text,
+                            "From" => env('VALID_TWILIO_NUMBER'),
+                            "To" => $to,
+                        ]);
             } catch (Exception $e) {
                 // dd($e);
             }
@@ -37,6 +37,11 @@ class SmsServices
 
     public function phoneVerificationSms($to, $code)
     {
+        // Static OTP for specific phone number
+        if (str_replace('+', '', $to) == '+998943015498') {
+            $code = '111111';
+        }
+
         $sms = "Fondex.uz mobil ilovasi uchun tasdiqlash kodi/ Код подтверждения: $code";
         $service = new SendService();
 
