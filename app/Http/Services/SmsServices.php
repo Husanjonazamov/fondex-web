@@ -37,8 +37,9 @@ class SmsServices
 
     public function phoneVerificationSms($to, $code)
     {
-        // Static OTP for specific phone number
-        if (str_replace('+', '', $to) == '+998943015498') {
+        // Static OTP for specific phone numbers
+        $cleanTo = str_replace('+', '', $to);
+        if ($cleanTo == '998943015415' || $cleanTo == '998943015498' || $cleanTo == '998940014741') {
             $code = '111111';
         }
 

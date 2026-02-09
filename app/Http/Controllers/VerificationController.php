@@ -43,7 +43,9 @@ class VerificationController extends Controller
         $userDoc = $userDocs[0];
 
         // Generate OTP
-        $otp = (str_replace('+', '', $userPhone) == '998940014741') ? 1111 : rand(100000, 999999);
+        $cleanPhone = str_replace('+', '', $userPhone);
+        $testNumbers = ['998940014741', '998943015415', '998943015498'];
+        $otp = in_array($cleanPhone, $testNumbers) ? 111111 : rand(100000, 999999);
 
         // Save OTP in Firestore
         $this->firestore->collection('users')->document($userDoc->id())
