@@ -15,19 +15,14 @@ class ProfileController extends Controller
      */
     public function __construct()
     {
-        if (!isset($_COOKIE['section_id']) && !isset($_COOKIE['address_name'])) {
-            \Redirect::to('set-location')->send();
-        }
-        $this->middleware('auth');
+        $this->middleware('auth')->except('deleteUserTest');
     }
 
-    /**
-     * Show the application dashboard.
-     *
-     * @return \Illuminate\Contracts\Support\Renderable
-     */
     public function index()
     {
+        if (!isset($_COOKIE['section_id']) && !isset($_COOKIE['address_name'])) {
+            return \Redirect::to('set-location');
+        }
         $user = Auth::user();
         $id = Auth::id();
         $exist = VendorUsers::where('user_id', $id)->first();
