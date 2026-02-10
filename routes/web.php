@@ -82,6 +82,7 @@ Route::post('apply-rental-coupon', [RentalController::class, 'applyRentalCoupon'
 Route::get('rental-cars-checkout', [RentalController::class, 'rentalCarsCheckout'])->name('rental_cars_checkout');
 Route::get('rental-orders', [RentalController::class, 'RentalOrders'])->name('rental_orders');
 Route::get('rental-orders-detail/{id}', [RentalController::class, 'RentalOrdersDetails'])->name('rental_orders_detail');
+Route::get('live-meter/{id}', [RentalController::class, 'liveMeter'])->name('live_meter');
 
 Route::get('my_order', [OrderController::class, 'index'])->name('my_order');
 Route::get('completed_order', [OrderController::class, 'completedOrders'])->name('completed_order');
@@ -200,7 +201,7 @@ Route::get('service-charge-failed', [PayLaterServiceChargeController::class, 'fa
 Route::post('service-charge-razorpay', [PayLaterServiceChargeController::class, 'razorpaypayment'])->name('service-charge-razorpay');
 Route::post('service-charge-stripe', [PayLaterServiceChargeController::class, 'processStripePayment'])->name('service-charge-stripe');
 Route::post('service-charge-paypal', [PayLaterServiceChargeController::class, 'processPaypalPayment'])->name('service-charge-paypal');
-Route::post('store-firebase-service', [HomeController::class,'storeServiceFile'])->name('storeServiceFile');
+Route::post('store-firebase-service', [HomeController::class, 'storeServiceFile'])->name('storeServiceFile');
 
 Route::get('pay-wallet', [App\Http\Controllers\TransactionController::class, 'proccesstopaywallet'])->name('pay-wallet');
 Route::post('wallet-proccessing', [App\Http\Controllers\TransactionController::class, 'walletProccessing'])->name('wallet-proccessing');

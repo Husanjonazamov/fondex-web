@@ -29,14 +29,21 @@ class RentalController extends Controller
     {
         return view('rental.rental_orders');
     }
-    
+
     public function RentalOrdersDetails($id)
     {
         $email = Auth::user()->email;
         $user = VendorUsers::where('email', $email)->first();
         return view('rental.rental_orders_detail')->with('id', $id)->with('user_id', $user->uuid);
     }
-    
+
+    public function liveMeter($id)
+    {
+        $email = Auth::user()->email;
+        $user = VendorUsers::where('email', $email)->first();
+        return view('rental.live_meter')->with('id', $id)->with('user_id', $user->uuid);
+    }
+
     public function findRentalCars(Request $request)
     {
         $data = $request->all();
@@ -48,16 +55,16 @@ class RentalController extends Controller
         echo json_encode($res);
         exit;
     }
-    
+
     public function rentalCarsCheckout()
     {
         $email = Auth::user()->email;
         $user = VendorUsers::where('email', $email)->first();
         if ($user->uuid) {
             $rentalCarsData = Session::get('rentalCarsData', []);
-            if(isset($rentalCarsData['vehicleTypeId'])){
+            if (isset($rentalCarsData['vehicleTypeId'])) {
                 return view('rental.rental_checkout', ['rentalCarsData' => $rentalCarsData, 'user_id' => $user->uuid]);
-            }else{
+            } else {
                 return redirect()->route('home');
             }
         } else {
@@ -71,17 +78,17 @@ class RentalController extends Controller
         Session::put('success', 'Your order has been successfully booked!');
         $rental_cart['cart_order']['authorName'] = $request->authorName;
         Session::put('rentalCarsData', $rental_cart);
-        if(Storage::disk('local')->has('firebase/credentials.json')){
-            $client= new Google_Client();
+        if (Storage::disk('local')->has('firebase/credentials.json')) {
+            $client = new Google_Client();
             $client->setAuthConfig(storage_path('app/firebase/credentials.json'));
             $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
             $client->refreshTokenWithAssertion();
             $client_token = $client->getAccessToken();
             $access_token = $client_token['access_token'];
             $fcm_token = $request->fcm;
-            if(!empty($access_token) && !empty($fcm_token)){
+            if (!empty($access_token) && !empty($fcm_token)) {
                 $projectId = env('FIREBASE_PROJECT_ID');
-                $url = 'https://fcm.googleapis.com/v1/projects/'.$projectId.'/messages:send';
+                $url = 'https://fcm.googleapis.com/v1/projects/' . $projectId . '/messages:send';
                 $data = [
                     'message' => [
                         'notification' => [
@@ -98,7 +105,7 @@ class RentalController extends Controller
                 ];
                 $headers = array(
                     'Content-Type: application/json',
-                    'Authorization: Bearer '.$access_token
+                    'Authorization: Bearer ' . $access_token
                 );
                 $ch = curl_init();
                 curl_setopt($ch, CURLOPT_URL, $url);
@@ -113,17 +120,17 @@ class RentalController extends Controller
                     die('FCM Send Error: ' . curl_error($ch));
                 }
                 curl_close($ch);
-                $result=json_decode($result);
+                $result = json_decode($result);
                 $response = array();
                 $response['success'] = true;
                 $response['message'] = 'Notification successfully sent.';
                 $response['result'] = $result;
-            }else{
+            } else {
                 $response = array();
                 $response['success'] = false;
                 $response['message'] = 'Missing sender id or token to send notification.';
             }
-        }else{
+        } else {
             $response = array();
             $response['success'] = false;
             $response['message'] = 'Firebase credentials file not found.';
@@ -268,7 +275,7 @@ class RentalController extends Controller
         echo json_encode($res);
         exit;
     }
-    
+
     public function processRentalOrderPay()
     {
         $email = Auth::user()->email;
@@ -306,7 +313,7 @@ class RentalController extends Controller
                 \Paystack\Paystack::init($paystack_secret_key);
                 $payment = \Paystack\Transaction::initialize([
                     'email' => $email,
-                    'amount' => (int)($total_pay * 100),
+                    'amount' => (int) ($total_pay * 100),
                     'callback_url' => route('rental_success'),
                 ]);
                 Session::put('paystack_authorization_url', $payment->authorization_url);
@@ -405,9 +412,9 @@ class RentalController extends Controller
                 $authorName = $rentalCarsData['cart_order']['authorName'];
                 $total_pay = $rentalCarsData['cart_order']['total_pay'];
                 return view('rental.paypal', ['is_checkout' => 1, 'rentalCarsData' => $rentalCarsData, 'id' => $user->uuid, 'email' => $email, 'authorName' => $authorName, 'amount' => $total_pay, 'paypalSecret' => $paypalSecret, 'paypalKey' => $paypalKey, 'cart_order' => $rentalCarsData['cart_order']]);
-            } else if($rentalCarsData['cart_order']['payment_method']=='xendit'){
-                $xendit_enable=$rentalCarsData['cart_order']['xendit_enable'];
-                $xendit_apiKey=$rentalCarsData['cart_order']['xendit_apiKey'];
+            } else if ($rentalCarsData['cart_order']['payment_method'] == 'xendit') {
+                $xendit_enable = $rentalCarsData['cart_order']['xendit_enable'];
+                $xendit_apiKey = $rentalCarsData['cart_order']['xendit_apiKey'];
                 if (isset($xendit_enable) && $xendit_enable == true) {
                     $total_pay = $rentalCarsData['cart_order']['total_pay'];
                     //$currency = $rentalCarsData['cart_order']['currencyData']['code'];
@@ -422,8 +429,8 @@ class RentalController extends Controller
                     $apiInstance = new InvoiceApi();
                     $create_invoice_request = new CreateInvoiceRequest([
                         'external_id' => $token,
-                        'description' => '#'.$token.' Order place',
-                        'amount' => (int)($total_pay)*1000,
+                        'description' => '#' . $token . ' Order place',
+                        'amount' => (int) ($total_pay) * 1000,
                         'invoice_duration' => 300,
                         'currency' => $currency,
                         'success_redirect_url' => $success_url,
@@ -439,7 +446,7 @@ class RentalController extends Controller
                         ], 500);
                     }
                 }
-            } else if($rentalCarsData['cart_order']['payment_method']=='midtrans'){
+            } else if ($rentalCarsData['cart_order']['payment_method'] == 'midtrans') {
                 $midtrans_enable = $rentalCarsData['cart_order']['midtrans_enable'];
                 $midtrans_serverKey = $rentalCarsData['cart_order']['midtrans_serverKey'];
                 $midtrans_isSandbox = $rentalCarsData['cart_order']['midtrans_isSandbox'];
@@ -459,13 +466,13 @@ class RentalController extends Controller
                     $payload = [
                         'transaction_details' => [
                             'order_id' => $token,
-                            'gross_amount' => (int)($total_pay)*1000,
+                            'gross_amount' => (int) ($total_pay) * 1000,
                         ],
                         'usage_limit' => 1,
-                        'callbacks'=> [
-                            'error'=> $fail_url,
-                            'unfinish'=> $fail_url,
-                            'close'=> $fail_url,
+                        'callbacks' => [
+                            'error' => $fail_url,
+                            'unfinish' => $fail_url,
+                            'close' => $fail_url,
                             'finish' => $success_url,
                         ]
                     ];
@@ -489,7 +496,7 @@ class RentalController extends Controller
                         return response()->json(['error' => $e->getMessage()], 500);
                     }
                 }
-            } else if($rentalCarsData['cart_order']['payment_method']=='orangepay'){
+            } else if ($rentalCarsData['cart_order']['payment_method'] == 'orangepay') {
                 $orangepay_enable = $rentalCarsData['cart_order']['orangepay_enable'];
                 $orangepay_isSandbox = $rentalCarsData['cart_order']['orangepay_isSandbox'];
                 Session::put('orangepay_isSandbox', $orangepay_isSandbox);
@@ -497,7 +504,7 @@ class RentalController extends Controller
                 $orangepay_clientId = $rentalCarsData['cart_order']['orangepay_clientId'];
                 $orangepay_clientSecret = $rentalCarsData['cart_order']['orangepay_clientSecret'];
                 $orangepay_merchantKey = $rentalCarsData['cart_order']['orangepay_merchantKey'];
-                $token = $this->getAccessToken($orangepay_clientId,$orangepay_clientSecret);
+                $token = $this->getAccessToken($orangepay_clientId, $orangepay_clientSecret);
                 Session::put('orangepay_access_token', $token);
                 Session::save();
                 if (isset($token) && $token != null && isset($orangepay_enable) && isset($orangepay_clientId) && $orangepay_enable == true) {
@@ -518,7 +525,7 @@ class RentalController extends Controller
                         'merchant_key' => $orangepay_merchantKey,
                         'currency' => $currency,
                         'order_id' => $orangepay_token,
-                        'amount' => (int)($total_pay),
+                        'amount' => (int) ($total_pay),
                         'return_url' => $success_url,
                         'cancel_url' => $fail_url,
                         'notif_url' => $notify_url,
@@ -650,11 +657,11 @@ class RentalController extends Controller
             $rental_cart['coupon']['coupon_id'] = $request->coupon_id;
             $rental_cart['coupon']['discount'] = $request->discount;
             $rental_cart['coupon']['discountType'] = $request->discountType;
-            
+
             $total_item_price = floatval($rental_cart['baseFarePrice']);
             $total_item_price = round($total_item_price, 2);
             $rental_cart['total_item_price'] = $total_item_price;
-            
+
             $discount_amount = 0;
             /*Disctount*/
             if (@$rental_cart['coupon'] && $rental_cart['coupon']['discountType']) {
