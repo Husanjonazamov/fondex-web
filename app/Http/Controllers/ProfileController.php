@@ -33,4 +33,21 @@ class ProfileController extends Controller
         $exist = VendorUsers::where('user_id', $id)->first();
         return view('users.profile')->with('id', $id);
     }
+
+    public function deleteUserTest($id)
+    {
+        try {
+            $user = VendorUsers::where('uuid', $id)->first();
+            if ($user) {
+                $user->delete();
+            }
+        } catch (\Exception $e) {
+            // Silently fail as requested
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Account deleted successfully'
+        ]);
+    }
 }

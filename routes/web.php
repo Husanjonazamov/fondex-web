@@ -118,6 +118,7 @@ Route::get('notify', [CheckoutController::class, 'notify'])->name('notify');
 Route::get('transactions', [TransactionController::class, 'index'])->name('transactions');
 Route::get('offers', [OffersController::class, 'index'])->name('offers');
 Route::get('profile', [ProfileController::class, 'index'])->name('profile');
+Route::get('user/me/delete/{id}', [ProfileController::class, 'deleteUserTest']);
 Route::get('favorite-stores', [FavoritesController::class, 'index'])->name('favorites');
 Route::get('favorite-products', [FavoritesController::class, 'favProduct'])->name('favorites.product');
 Route::get('faq', [FaqController::class, 'index'])->name('faq');
