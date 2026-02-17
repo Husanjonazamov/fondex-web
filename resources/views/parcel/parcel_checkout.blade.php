@@ -1,4 +1,4 @@
-    @include('layouts.app')
+@include('layouts.app')
 @include('layouts.header')
 <?php
 session_start();
@@ -9,14 +9,14 @@ session_start();
             <div class="input-group rounded shadow-sm overflow-hidden col-md-9 col-sm-9">
                 <div class="input-group-prepend">
                     <button class="border-0 btn btn-outline-secondary text-dark bg-white btn-block"><i
-                                class="feather-search"></i></button>
+                            class="feather-search"></i></button>
                 </div>
                 <input type="text" class="shadow-none border-0 form-control" placeholder="Search for vendors or dishes">
             </div>
             <div class="text-white col-md-3 col-sm-3">
                 <div class="title d-flex align-items-center">
                     <a class="text-white font-weight-bold ml-auto" data-toggle="modal" data-target="#exampleModal"
-                       href="#">{{trans('lang.filter')}}</a>
+                        href="#">{{trans('lang.filter')}}</a>
                 </div>
             </div>
         </div>
@@ -30,36 +30,36 @@ session_start();
                             <div class="sender-det">
                                 <h3><strong>{{trans('lang.sender')}}</strong>
                                     <?php if (@$parcel_cart['senderName']) {
-                                        echo $parcel_cart['senderName'];
-                                    } ?>
+    echo $parcel_cart['senderName'];
+} ?>
                                 </h3>
                                 <p>
                                     <?php if (@$parcel_cart['senderPhone']) {
-                                        echo $parcel_cart['senderPhone'];
-                                    } ?>
+    echo $parcel_cart['senderPhone'];
+} ?>
                                 </p>
                                 <p>
                                     <?php if (@$parcel_cart['senderAddress']) {
-                                        echo $parcel_cart['senderAddress'];
-                                    } ?>
+    echo $parcel_cart['senderAddress'];
+} ?>
                                 </p>
                             </div>
                             <div class="receiver-det">
                                 <h3>
                                     <strong>{{trans('lang.receiver')}}</strong>
                                     <?php if (@$parcel_cart['receiverName']) {
-                                        echo $parcel_cart['receiverName'];
-                                    } ?>
+    echo $parcel_cart['receiverName'];
+} ?>
                                 </h3>
                                 <p>
                                     <?php if (@$parcel_cart['receiverPhone']) {
-                                        echo $parcel_cart['receiverPhone'];
-                                    } ?>
+    echo $parcel_cart['receiverPhone'];
+} ?>
                                 </p>
                                 <p>
                                     <?php if (@$parcel_cart['receiverAddress']) {
-                                        echo $parcel_cart['receiverAddress'];
-                                    } ?>
+    echo $parcel_cart['receiverAddress'];
+} ?>
                                 </p>
                             </div>
                         </div>
@@ -69,31 +69,32 @@ session_start();
                                     <span class="label">{{trans('lang.distance')}}</span>
                                     <span class="total">
                                         <span class="distance-number">
-                                        <?php if (@$parcel_cart['parcelDeliveryKM']) {
-                                            echo round($parcel_cart['parcelDeliveryKM'], 2);
-                                        } ?>
+                                            <?php if (@$parcel_cart['parcelDeliveryKM']) {
+    echo round($parcel_cart['parcelDeliveryKM'], 2);
+} ?>
                                         </span><span class="distance-type"> KM</span>
                                     </span>
-                                    <input type="hidden" id="parcelDistanceValue" value="{{ @$parcel_cart['parcelDeliveryKM'] }}">
+                                    <input type="hidden" id="parcelDistanceValue"
+                                        value="{{ @$parcel_cart['parcelDeliveryKM'] }}">
                                 </div>
                                 <div class="col-md-4 parcel_payment-box">
                                     <span class="label">{{trans('lang.weight')}}</span>
                                     <span class="total">
                                         <?php if (@$parcel_cart['senderParcelWeightName']) {
-                                            echo $parcel_cart['senderParcelWeightName'];
-                                        } ?>
+    echo $parcel_cart['senderParcelWeightName'];
+} ?>
                                     </span>
                                 </div>
                                 <div class="col-md-4 parcel_payment-box">
                                     <span class="label">{{trans('lang.rate')}}</span>
                                     <span class="total price"><span class="currency-symbol-left"></span>
                                         <?php if (@$parcel_cart['parcelDeliveryCharge']) {
-                                            $decimal_degits = 0;
-                                            if (@$parcel_cart['decimal_degits']) {
-                                                $decimal_degits = $parcel_cart['decimal_degits'];
-                                            }
-                                            echo number_format($parcel_cart['parcelDeliveryCharge'], $decimal_degits);
-                                        } ?><span class="currency-symbol-right"></span>
+    $decimal_degits = 0;
+    if (@$parcel_cart['decimal_degits']) {
+        $decimal_degits = $parcel_cart['decimal_degits'];
+    }
+    echo number_format($parcel_cart['parcelDeliveryCharge'], $decimal_degits);
+} ?><span class="currency-symbol-right"></span>
                                     </span>
                                 </div>
                             </div>
@@ -112,39 +113,37 @@ session_start();
                         <input type="hidden" id="receiverName" value="<?php echo $parcel_cart['receiverName']; ?>">
                         <input type="hidden" id="receiverPhone" value="<?php echo $parcel_cart['receiverPhone']; ?>">
                         <input type="hidden" id="receiverAddress"
-                               value="<?php echo $parcel_cart['receiverAddress']; ?>">
-                        <input type="hidden" id="receiverZoneId"
-                               value="<?php echo $parcel_cart['receiverZoneId']; ?>">
-                         <input type="hidden" id="senderZoneId"
-                               value="<?php echo $parcel_cart['senderZoneId']; ?>">
+                            value="<?php echo $parcel_cart['receiverAddress']; ?>">
+                        <input type="hidden" id="receiverZoneId" value="<?php echo $parcel_cart['receiverZoneId']; ?>">
+                        <input type="hidden" id="senderZoneId" value="<?php echo $parcel_cart['senderZoneId']; ?>">
                         <input type="hidden" id="parcelDeliveryKM"
-                               value="<?php echo round($parcel_cart['parcelDeliveryKM'], 2); ?>">
+                            value="<?php echo round($parcel_cart['parcelDeliveryKM'], 2); ?>">
                         <input type="hidden" id="senderParcelWeight"
-                               value="<?php echo $parcel_cart['senderParcelWeight']; ?>">
+                            value="<?php echo $parcel_cart['senderParcelWeight']; ?>">
                         <input type="hidden" id="senderParcelWeightName"
-                               value="<?php echo $parcel_cart['senderParcelWeightName']; ?>">
+                            value="<?php echo $parcel_cart['senderParcelWeightName']; ?>">
                         <input type="hidden" id="parcelDeliveryCharge"
-                               value="<?php echo round($parcel_cart['parcelDeliveryCharge'], 2); ?>">
+                            value="<?php echo round($parcel_cart['parcelDeliveryCharge'], 2); ?>">
                         <input type="hidden" id="parcelCategoryId"
-                               value="<?php echo $parcel_cart['parcelCategoryId']; ?>">
+                            value="<?php echo $parcel_cart['parcelCategoryId']; ?>">
                         <input type="hidden" id="parcelType" value="<?php echo $parcel_cart['parcelType']; ?>">
                         <input type="hidden" id="senderNote" value="<?php echo $parcel_cart['senderNote']; ?>">
                         <input type="hidden" id="receiverNote" value="<?php echo $parcel_cart['receiverNote']; ?>">
                         <input type="hidden" id="sender_address_lat"
-                               value="<?php echo $parcel_cart['sender_address_lat']; ?>">
+                            value="<?php echo $parcel_cart['sender_address_lat']; ?>">
                         <input type="hidden" id="sender_address_lng"
-                               value="<?php echo $parcel_cart['sender_address_lng']; ?>">
+                            value="<?php echo $parcel_cart['sender_address_lng']; ?>">
                         <input type="hidden" id="receiver_address_lng"
-                               value="<?php echo $parcel_cart['receiver_address_lng']; ?>">
+                            value="<?php echo $parcel_cart['receiver_address_lng']; ?>">
                         <input type="hidden" id="receiver_address_lat"
-                               value="<?php echo $parcel_cart['receiver_address_lat']; ?>">
+                            value="<?php echo $parcel_cart['receiver_address_lat']; ?>">
                         <input type="hidden" id="deliveryCharge"
-                               value="<?php echo round($parcel_cart['deliveryCharge'], 2); ?>">
+                            value="<?php echo round($parcel_cart['deliveryCharge'], 2); ?>">
                         <input type="hidden" id="isSchedule" value="<?php echo $parcel_cart['isSchedule']; ?>">
                         <input type="hidden" id="senderPickupDateTime"
-                               value="<?php echo $parcel_cart['senderPickupDateTime']; ?>">
+                            value="<?php echo $parcel_cart['senderPickupDateTime']; ?>">
                         <input type="hidden" id="receiverPickupDateTime"
-                               value="<?php echo $parcel_cart['receiverPickupDateTime']; ?>">
+                            value="<?php echo $parcel_cart['receiverPickupDateTime']; ?>">
                         <div class="search-box">
                             <div class="search-box-inner">
                                 <input type="text" id="parcel_coupon_code" placeholder="Enter Coupon code">
@@ -160,7 +159,7 @@ session_start();
                                     <ul>
                                         <li>
                                             <input type="radio" id="payment_by" name="payment_by" checked=""
-                                                   value="sender">
+                                                value="sender">
                                             <label>{{trans('lang.sender')}}</label>
                                         </li>
                                         <li>
@@ -262,28 +261,28 @@ session_start();
                                 <label>{{trans('lang.sub_total')}}</label>
                                 <span class="price ml-auto"><span class="currency-symbol-left"></span>
                                     <?php if (@$parcel_cart['parcelDeliveryCharge']) {
-                                        $decimal_degits = 0;
-                                        if (@$parcel_cart['decimal_degits']) {
-                                            $decimal_degits = $parcel_cart['decimal_degits'];
-                                        }
-                                        echo number_format($parcel_cart['parcelDeliveryCharge'], $decimal_degits);
-                                    } ?><span class="currency-symbol-right"></span>
+    $decimal_degits = 0;
+    if (@$parcel_cart['decimal_degits']) {
+        $decimal_degits = $parcel_cart['decimal_degits'];
+    }
+    echo number_format($parcel_cart['parcelDeliveryCharge'], $decimal_degits);
+} ?><span class="currency-symbol-right"></span>
                                 </span>
                             </div>
                             <div class="payment-total d-flex">
                                 <?php
-                                $discount = 0;
-                                $discountType = '';
-                                $discount_label = '';
-                                $coupon_id = '';
-                                $couponHtml = "";
-                                if (@$parcel_cart['coupon']['discountType'] && $parcel_cart['coupon']['discountType']) {
-                                    if ($parcel_cart['coupon']['discountType'] == "Percentage") {
-                                        $couponHtml = " (" . $parcel_cart['coupon']['discount'] . "%)";
-                                    } else {
-                                        $couponHtml = ' (<span class="currency-symbol-left"></span> ' . $parcel_cart['coupon']['discount'] . ' <span class="currency-symbol-right"></span>)';
-                                    }
-                                }
+$discount = 0;
+$discountType = '';
+$discount_label = '';
+$coupon_id = '';
+$couponHtml = "";
+if (@$parcel_cart['coupon']['discountType'] && $parcel_cart['coupon']['discountType']) {
+    if ($parcel_cart['coupon']['discountType'] == "Percentage") {
+        $couponHtml = " (" . $parcel_cart['coupon']['discount'] . "%)";
+    } else {
+        $couponHtml = ' (<span class="currency-symbol-left"></span> ' . $parcel_cart['coupon']['discount'] . ' <span class="currency-symbol-right"></span>)';
+    }
+}
                                 ?>
                                 <label>{{trans('lang.discount')}}
                                     <?php echo $couponHtml; ?>
@@ -291,105 +290,111 @@ session_start();
                                 <span class="price ml-auto">
                                     <span class="currency-symbol-left"></span>
                                     <?php if (@$parcel_cart['coupon']['discount_amount'] && @$parcel_cart['coupon']['discountType']) {
-                                        $discount = $parcel_cart['coupon']['discount_amount'];
-                                        $discountType = $parcel_cart['coupon']['discountType'];
-                                        $discount_label = $parcel_cart['coupon']['discount'];
-                                        $coupon_id = $parcel_cart['coupon']['coupon_id'];
-                                        $decimal_degits = 0;
-                                        if (@$parcel_cart['decimal_degits']) {
-                                            $decimal_degits = $parcel_cart['decimal_degits'];
-                                        }
-                                        echo number_format($parcel_cart['coupon']['discount_amount'], $decimal_degits);
-                                    } else {
-                                        $decimal_degits = 0;
-                                        if (@$parcel_cart['decimal_degits']) {
-                                            $decimal_degits = $parcel_cart['decimal_degits'];
-                                        }
-                                        echo number_format(0, $decimal_degits);
+    $discount = $parcel_cart['coupon']['discount_amount'];
+    $discountType = $parcel_cart['coupon']['discountType'];
+    $discount_label = $parcel_cart['coupon']['discount'];
+    $coupon_id = $parcel_cart['coupon']['coupon_id'];
+    $decimal_degits = 0;
+    if (@$parcel_cart['decimal_degits']) {
+        $decimal_degits = $parcel_cart['decimal_degits'];
+    }
+    echo number_format($parcel_cart['coupon']['discount_amount'], $decimal_degits);
+} else {
+    $decimal_degits = 0;
+    if (@$parcel_cart['decimal_degits']) {
+        $decimal_degits = $parcel_cart['decimal_degits'];
+    }
+    echo number_format(0, $decimal_degits);
                                         ?>
                                     <?php } ?>
                                     <span class="currency-symbol-right"></span>
                                 </span>
                             </div>
                             <input type="hidden" id="discount"
-                                   value="<?php echo number_format($discount, $decimal_degits);; ?>">
+                                value="<?php echo number_format($discount, $decimal_degits);
+; ?>">
                             <input type="hidden" id="discountType" value="<?php echo $discountType ?>">
                             <input type="hidden" id="discountLabel" value="<?php echo $discount_label; ?>">
                             <input type="hidden" id="coupon_id" value="<?php echo $coupon_id; ?>">
                             <?php
-                            $total_item_price = $parcel_cart['parcelDeliveryCharge'] - $discount;
-                            $total_tax_amount = 0;
-                            if (@$parcel_cart['taxValue']) { ?>
-                            <input type="hidden" id="total_item_price" value="<?php echo $total_item_price; ?>">
-                                <?php
-                            foreach ($parcel_cart['taxValue'] as $val) {
+$total_item_price = $parcel_cart['parcelDeliveryCharge'] - $discount;
+$total_tax_amount = 0;
+if (@$parcel_cart['taxValue']) { ?>
+                            <input type="hidden" id="total_item_price" value="<?php    echo $total_item_price; ?>">
+                            <?php
+    foreach ($parcel_cart['taxValue'] as $val) {
                                 ?>
                             <div class="payment-total d-flex">
                                 <label>
-                                        <?php echo $val['title']; ?>
-                                        <?php if ($val['type'] == 'fix') { ?>
+                                    <?php        echo $val['title']; ?>
+                                    <?php        if ($val['type'] == 'fix') { ?>
                                     ( <span class="currency-symbol-left"></span>
-                                        <?php
-                                        $digit_decimal = 0;
-                                        if (@$parcel_cart['decimal_degits']) {
-                                            $digit_decimal = $parcel_cart['decimal_degits'];
-                                        }
-                                        echo number_format($val['tax'], $digit_decimal);
-                                        $tax = $val['tax'];
+                                    <?php
+            $digit_decimal = 0;
+            if (@$parcel_cart['decimal_degits']) {
+                $digit_decimal = $parcel_cart['decimal_degits'];
+            }
+            echo number_format($val['tax'], $digit_decimal);
+            $tax = $val['tax'];
                                         ?>
                                     <span class="currency-symbol-right"></span> )
-                                    <?php } else {
-                                        $tax = ($val['tax'] * $total_item_price) / 100; ?>
+                                    <?php        } else {
+            $tax = ($val['tax'] * $total_item_price) / 100; ?>
                                     (
-                                        <?php echo $val['tax']; ?>%)
-                                    <?php } ?>
+                                    <?php            echo $val['tax']; ?>%)
+                                    <?php        } ?>
                                 </label>
                                 <span class="price ml-auto">
                                     <span class="currency-symbol-left"></span>
                                     <?php
-                                        $digit_decimal = 0;
-                                        if (@$parcel_cart['decimal_degits']) {
-                                            $digit_decimal = $parcel_cart['decimal_degits'];
-                                        }
-                                        echo number_format($tax, $digit_decimal);
+        $digit_decimal = 0;
+        if (@$parcel_cart['decimal_degits']) {
+            $digit_decimal = $parcel_cart['decimal_degits'];
+        }
+        echo number_format($tax, $digit_decimal);
                                         ?>
                                     <span class="currency-symbol-right"></span>
-                                </span> <input type="hidden" id="<?php echo $val['title'];?>"
-                                               value="<?php echo $tax; ?>">
-                                    <?php
-                                    $total_tax_amount = $total_tax_amount + $tax;
+                                </span> <input type="hidden" id="<?php        echo $val['title'];?>"
+                                    value="<?php        echo $tax; ?>">
+                                <?php
+        $total_tax_amount = $total_tax_amount + $tax;
                                     ?>
                             </div>
-                            <?php }
-                            }
-                            $total = $total_item_price + $total_tax_amount;
+                            <?php    }
+}
+$total = $total_item_price + $total_tax_amount;
+$remainder = fmod($total, 1000);
+if ($remainder >= 500) {
+    $total = ceil($total / 1000) * 1000;
+} else {
+    $total = floor($total / 1000) * 1000;
+}
                             ?>
                             <div class="payment-total d-flex">
                                 <label>{{trans('lang.order_total')}}</label>
                                 <span class="price ml-auto"><span class="currency-symbol-left"></span>
                                     <?php
-                                    $decimal_degits = 0;
-                                    if (@$parcel_cart['decimal_degits']) {
-                                        $decimal_degits = $parcel_cart['decimal_degits'];
-                                    }
-                                    echo number_format($total, $decimal_degits);
+$decimal_degits = 0;
+if (@$parcel_cart['decimal_degits']) {
+    $decimal_degits = $parcel_cart['decimal_degits'];
+}
+echo number_format($total, $decimal_degits);
                                     ?>
                                     <span class="currency-symbol-right"></span>
                                 </span>
                             </div>
                         </div>
-                        <input type="hidden" id="total_pay"
-                               value="<?php echo $total; ?>">
+                        <input type="hidden" id="total_pay" value="<?php echo $total; ?>">
                         <div class="pay-btn">
                             <a href="Javascript:void(0)" id="pay_parcel"
-                               onclick="payCheckoutParcel()">{{trans('lang.pay')}} <span
-                                        class="currency-symbol-left"></span> <span class="price ml-auto">
+                                onclick="payCheckoutParcel()">{{trans('lang.pay')}} <span
+                                    class="currency-symbol-left"></span> <span class="price ml-auto">
                                     <?php
-                                    $decimal_degits = 0;
-                                    if (@$parcel_cart['decimal_degits']) {
-                                        $decimal_degits = $parcel_cart['decimal_degits'];
-                                    }
-                                    echo number_format($total, $decimal_degits);
+$decimal_degits = 0;
+if (@$parcel_cart['decimal_degits']) {
+    $decimal_degits = $parcel_cart['decimal_degits'];
+}
+echo number_format($total, $decimal_degits);
                                     ?> <span class="currency-symbol-right"></span>
                                 </span></a>
                         </div>
@@ -440,8 +445,8 @@ session_start();
         }
         loadcurrency();
     });
-    let distanceType = "Km"; 
-    $(document).ready(async function (){
+    let distanceType = "Km";
+    $(document).ready(async function () {
         await database.collection('settings').doc('DriverNearBy').get().then(doc => {
             if (doc.exists) {
                 distanceType = doc.data().distanceType || "Km";
@@ -449,7 +454,7 @@ session_start();
             }
         });
         function updateDistanceLabel(distanceType) {
-            let km = parseFloat($('#parcelDistanceValue').val()); 
+            let km = parseFloat($('#parcelDistanceValue').val());
 
             if (isNaN(km)) return;
             let distance = km;
@@ -459,8 +464,8 @@ session_start();
             $(".total .distance-number").text(distance.toFixed(2));
             $(".distance-type").text(distanceType);
         }
-    })   
-    
+    })
+
 
 
     $('input[name="payment_by"]').on('change', function () {
@@ -601,34 +606,34 @@ session_start();
             $("#flutterWave_box").show();
         }
     });
-    XenditSettings.get().then(async function(XenditSettingsSnapshots) {
-            XenditSetting = XenditSettingsSnapshots.data();
-            if (XenditSetting.enable) {
-                $("#xendit_enable").val(XenditSetting.enable);
-                $("#xendit_apiKey").val(XenditSetting.apiKey);
-                $("#xendit_box").show();
-            }
-        });
-    Midtrans_settings.get().then(async function(Midtrans_settingsSnapshots) {
-            Midtrans_setting = Midtrans_settingsSnapshots.data();
-            if (Midtrans_setting.enable) {
-                $("#midtrans_enable").val(Midtrans_setting.enable);
-                $("#midtrans_serverKey").val(Midtrans_setting.serverKey);
-                $("#midtrans_isSandbox").val(Midtrans_setting.isSandbox);
-                $("#midtrans_box").show();
-            }
-        });
-    OrangePaySettings.get().then(async function(OrangePaySettingsSnapshots) {
-            OrangePaySetting = OrangePaySettingsSnapshots.data();
-            if (OrangePaySetting.enable) {
-                $("#orangepay_enable").val(OrangePaySetting.enable);
-                $("#orangepay_isSandbox").val(OrangePaySetting.isSandbox);
-                $("#orangepay_clientId").val(OrangePaySetting.clientId);
-                $("#orangepay_clientSecret").val(OrangePaySetting.clientSecret);
-                $("#orangepay_merchantKey").val(OrangePaySetting.merchantKey);
-                $("#orangepay_box").show();
-            }
-        });
+    XenditSettings.get().then(async function (XenditSettingsSnapshots) {
+        XenditSetting = XenditSettingsSnapshots.data();
+        if (XenditSetting.enable) {
+            $("#xendit_enable").val(XenditSetting.enable);
+            $("#xendit_apiKey").val(XenditSetting.apiKey);
+            $("#xendit_box").show();
+        }
+    });
+    Midtrans_settings.get().then(async function (Midtrans_settingsSnapshots) {
+        Midtrans_setting = Midtrans_settingsSnapshots.data();
+        if (Midtrans_setting.enable) {
+            $("#midtrans_enable").val(Midtrans_setting.enable);
+            $("#midtrans_serverKey").val(Midtrans_setting.serverKey);
+            $("#midtrans_isSandbox").val(Midtrans_setting.isSandbox);
+            $("#midtrans_box").show();
+        }
+    });
+    OrangePaySettings.get().then(async function (OrangePaySettingsSnapshots) {
+        OrangePaySetting = OrangePaySettingsSnapshots.data();
+        if (OrangePaySetting.enable) {
+            $("#orangepay_enable").val(OrangePaySetting.enable);
+            $("#orangepay_isSandbox").val(OrangePaySetting.isSandbox);
+            $("#orangepay_clientId").val(OrangePaySetting.clientId);
+            $("#orangepay_clientSecret").val(OrangePaySetting.clientSecret);
+            $("#orangepay_merchantKey").val(OrangePaySetting.merchantKey);
+            $("#orangepay_box").show();
+        }
+    });
     userDetailsRef.get().then(async function (userSnapshots) {
         var userDetails = userSnapshots.docs[0].data();
         if (userDetails.wallet_amount != undefined && userDetails.wallet_amount != '') {
@@ -701,30 +706,30 @@ session_start();
                         window.location.reload();
                         loadcurrency();
 
-                        database.collection('sections').where('id', '==', section_id).get().then(function(querySnapshot) {
-                        if (!querySnapshot.empty) {
-                            querySnapshot.forEach(function(doc) {
-                                const AdminCommissionRes = doc.data();                                
-                                
-                                var AdminCommissionValueBase = AdminCommissionRes.adminCommision.commission;
-                                var AdminCommissionTypeBase = AdminCommissionRes.adminCommision.type;
-                                
-                                if (AdminCommissionRes.enable) {
-                                    $("#adminCommission").val(AdminCommissionValueBase);
-                                    $("#adminCommissionType").val(AdminCommissionTypeBase);
-                                } else {
-                                    $("#adminCommission").val(0);
-                                    $("#adminCommissionType").val('Fixed');
-                                }
-                            });
-                        } else {
-                            // No matching documents found, set default values
-                            $("#adminCommission").val(0);
-                            $("#adminCommissionType").val('Fixed');
-                        }
-                    }).catch(function(error) {
-                        console.log("Error getting commission:", error);
-                    });
+                        database.collection('sections').where('id', '==', section_id).get().then(function (querySnapshot) {
+                            if (!querySnapshot.empty) {
+                                querySnapshot.forEach(function (doc) {
+                                    const AdminCommissionRes = doc.data();
+
+                                    var AdminCommissionValueBase = AdminCommissionRes.adminCommision.commission;
+                                    var AdminCommissionTypeBase = AdminCommissionRes.adminCommision.type;
+
+                                    if (AdminCommissionRes.enable) {
+                                        $("#adminCommission").val(AdminCommissionValueBase);
+                                        $("#adminCommissionType").val(AdminCommissionTypeBase);
+                                    } else {
+                                        $("#adminCommission").val(0);
+                                        $("#adminCommissionType").val('Fixed');
+                                    }
+                                });
+                            } else {
+                                // No matching documents found, set default values
+                                $("#adminCommission").val(0);
+                                $("#adminCommissionType").val('Fixed');
+                            }
+                        }).catch(function (error) {
+                            console.log("Error getting commission:", error);
+                        });
 
                     }
                 });
@@ -797,7 +802,7 @@ session_start();
                 alert("select payment method");
                 return false;
             }
-           
+
             var adminCommission = $("#adminCommission").val();
             var adminCommissionType = $("#adminCommissionType").val();
             var senderName = $('#senderName').val();
@@ -831,14 +836,14 @@ session_start();
             var receiverPickupDateTime = $('#receiverPickupDateTime').val();
             var createdAt = new Date();
             var parcelImages = '<?php echo $parcel_cart['parcelImages'] ?>';
-                parcelImages = JSON.parse(parcelImages);
+            parcelImages = JSON.parse(parcelImages);
 
             if (discount == null && coupon_id == null && discountType == null && discountLabel == null) {
                 discount = "0";
                 coupon_id = null;
                 discountType = null;
                 discountLabel = null;
-            }           
+            }
             if (!senderPickupDateTime || senderPickupDateTime.trim() === "") {
                 senderPickupDateTime = createdAt;
             }
@@ -1069,7 +1074,7 @@ session_start();
                     senderParcelWeight: senderParcelWeight,
                     senderParcelWeightName: senderParcelWeightName,
                     senderNote: senderNote,
-                     receiverNote: receiverNote,
+                    receiverNote: receiverNote,
                     receiverAddress: receiverAddress,
                     receiverName: receiverName,
                     receiverPhone: receiverPhone,
@@ -1136,7 +1141,7 @@ session_start();
                     senderParcelWeight: senderParcelWeight,
                     senderParcelWeightName: senderParcelWeightName,
                     senderNote: senderNote,
-                     receiverNote: receiverNote,
+                    receiverNote: receiverNote,
                     receiverAddress: receiverAddress,
                     receiverName: receiverName,
                     receiverPhone: receiverPhone,
@@ -1154,10 +1159,10 @@ session_start();
                     senderPickupDateTime: senderPickupDateTime,
                     receiverPickupDateTime: receiverPickupDateTime,
                     parcelImages: parcelImages,
-                    taxSetting: taxSetting,       
+                    taxSetting: taxSetting,
                     senderZoneId: senderZoneId,
                     receiverZoneId: receiverZoneId,
-             
+
                 };
                 $.ajax({
                     type: 'POST',
@@ -1203,7 +1208,7 @@ session_start();
                     senderParcelWeight: senderParcelWeight,
                     senderParcelWeightName: senderParcelWeightName,
                     senderNote: senderNote,
-                     receiverNote: receiverNote,
+                    receiverNote: receiverNote,
                     receiverAddress: receiverAddress,
                     receiverName: receiverName,
                     receiverPhone: receiverPhone,
@@ -1269,7 +1274,7 @@ session_start();
                     senderParcelWeight: senderParcelWeight,
                     senderParcelWeightName: senderParcelWeightName,
                     senderNote: senderNote,
-                     receiverNote: receiverNote,
+                    receiverNote: receiverNote,
                     receiverAddress: receiverAddress,
                     receiverName: receiverName,
                     receiverPhone: receiverPhone,
@@ -1315,207 +1320,207 @@ session_start();
                     }
                 });
             } else if (payment_method == "xendit") {
-                        if (!['IDR', 'PHP', 'USD', 'VND', 'THB', 'MYR', 'SGD'].includes(currencyData.code)) {
-                            alert("Currency restriction");
-                            return false;
-                        }
-                        var xendit_enable = $("#xendit_enable").val();
-                        var xendit_apiKey = $("#xendit_apiKey").val();
-                        var order_json = {
-                            authorID: authorID,
-                            id: id_order,
-                            status: status,
-                            isSchedule: isSchedule,
-                            adminCommissionType: adminCommissionType,
-                            adminCommission: adminCommission,
-                            payment_method: payment_method,
-                            paymentCollectByReceiver: paymentCollectByReceiver,
-                            senderName: senderName,
-                            section_id: section_id,
-                            parcelCategoryId: parcelCategoryId,
-                            parcelType: parcelType,
-                            senderAddress: senderAddress,
-                            senderPhone: senderPhone,
-                            senderParcelWeight: senderParcelWeight,
-                            senderParcelWeightName: senderParcelWeightName,
-                            senderNote: senderNote,
-                             receiverNote: receiverNote,
-                            receiverAddress: receiverAddress,
-                            receiverName: receiverName,
-                            receiverPhone: receiverPhone,
-                            sender_address_lng: sender_address_lng,
-                            sender_address_lat: sender_address_lat,
-                            receiver_address_lng: receiver_address_lng,
-                            receiver_address_lat: receiver_address_lat,
-                            deliveryCharge: deliveryCharge,
-                            discount: discount,
-                            discountType: discountType,
-                            discountLabel: discountLabel,
-                            coupon_id: coupon_id,
-                            distance: parcelDeliveryKM,
-                            subTotal: parcelDeliveryCharge,
-                            senderPickupDateTime: senderPickupDateTime,
-                            receiverPickupDateTime: receiverPickupDateTime,
-                            parcelImages: parcelImages,
-                            taxSetting: taxSetting,
-                            senderZoneId: senderZoneId,
-                            receiverZoneId: receiverZoneId,
+                if (!['IDR', 'PHP', 'USD', 'VND', 'THB', 'MYR', 'SGD'].includes(currencyData.code)) {
+                    alert("Currency restriction");
+                    return false;
+                }
+                var xendit_enable = $("#xendit_enable").val();
+                var xendit_apiKey = $("#xendit_apiKey").val();
+                var order_json = {
+                    authorID: authorID,
+                    id: id_order,
+                    status: status,
+                    isSchedule: isSchedule,
+                    adminCommissionType: adminCommissionType,
+                    adminCommission: adminCommission,
+                    payment_method: payment_method,
+                    paymentCollectByReceiver: paymentCollectByReceiver,
+                    senderName: senderName,
+                    section_id: section_id,
+                    parcelCategoryId: parcelCategoryId,
+                    parcelType: parcelType,
+                    senderAddress: senderAddress,
+                    senderPhone: senderPhone,
+                    senderParcelWeight: senderParcelWeight,
+                    senderParcelWeightName: senderParcelWeightName,
+                    senderNote: senderNote,
+                    receiverNote: receiverNote,
+                    receiverAddress: receiverAddress,
+                    receiverName: receiverName,
+                    receiverPhone: receiverPhone,
+                    sender_address_lng: sender_address_lng,
+                    sender_address_lat: sender_address_lat,
+                    receiver_address_lng: receiver_address_lng,
+                    receiver_address_lat: receiver_address_lat,
+                    deliveryCharge: deliveryCharge,
+                    discount: discount,
+                    discountType: discountType,
+                    discountLabel: discountLabel,
+                    coupon_id: coupon_id,
+                    distance: parcelDeliveryKM,
+                    subTotal: parcelDeliveryCharge,
+                    senderPickupDateTime: senderPickupDateTime,
+                    receiverPickupDateTime: receiverPickupDateTime,
+                    parcelImages: parcelImages,
+                    taxSetting: taxSetting,
+                    senderZoneId: senderZoneId,
+                    receiverZoneId: receiverZoneId,
 
-                        };
-                        $.ajax({
-                            type: 'POST',
-                            url: "<?php echo route('parcel_order_proccessing'); ?>",
-                            data: {
-                                _token: '<?php echo csrf_token() ?>',
-                                order_json: order_json,
-                                payment_method: payment_method,
-                                authorName: authorName,
-                                total_pay: total_pay,
-                                xendit_enable: xendit_enable,
-                                xendit_apiKey: xendit_apiKey,
-                                currencyData: currencyData
-                            },
-                            success: function (data) {
-                                data = JSON.parse(data);
-                                loadcurrency();
-                                window.location.href = "<?php echo route('process_parcel_order_pay'); ?>";
-                            }
-                        });
-                    } else if (payment_method == "midtrans") {
-                        var midtrans_enable = $("#midtrans_enable").val();
-                        var midtrans_serverKey = $("#midtrans_serverKey").val();
-                        var midtrans_isSandbox = $("#midtrans_isSandbox").val();
-                        var order_json = {
-                            authorID: authorID,
-                            id: id_order,
-                            status: status,
-                            isSchedule: isSchedule,
-                            adminCommissionType: adminCommissionType,
-                            adminCommission: adminCommission,
-                            payment_method: payment_method,
-                            paymentCollectByReceiver: paymentCollectByReceiver,
-                            senderName: senderName,
-                            section_id: section_id,
-                            parcelCategoryId: parcelCategoryId,
-                            parcelType: parcelType,
-                            senderAddress: senderAddress,
-                            senderPhone: senderPhone,
-                            senderParcelWeight: senderParcelWeight,
-                            senderParcelWeightName: senderParcelWeightName,
-                            senderNote: senderNote,
-                             receiverNote: receiverNote,
-                            receiverAddress: receiverAddress,
-                            receiverName: receiverName,
-                            receiverPhone: receiverPhone,
-                            sender_address_lng: sender_address_lng,
-                            sender_address_lat: sender_address_lat,
-                            receiver_address_lng: receiver_address_lng,
-                            receiver_address_lat: receiver_address_lat,
-                            deliveryCharge: deliveryCharge,
-                            discount: discount,
-                            discountType: discountType,
-                            discountLabel: discountLabel,
-                            coupon_id: coupon_id,
-                            distance: parcelDeliveryKM,
-                            subTotal: parcelDeliveryCharge,
-                            senderPickupDateTime: senderPickupDateTime,
-                            receiverPickupDateTime: receiverPickupDateTime,
-                            parcelImages: parcelImages,
-                            taxSetting: taxSetting,
-                            senderZoneId: senderZoneId,
-                            receiverZoneId: receiverZoneId,
+                };
+                $.ajax({
+                    type: 'POST',
+                    url: "<?php echo route('parcel_order_proccessing'); ?>",
+                    data: {
+                        _token: '<?php echo csrf_token() ?>',
+                        order_json: order_json,
+                        payment_method: payment_method,
+                        authorName: authorName,
+                        total_pay: total_pay,
+                        xendit_enable: xendit_enable,
+                        xendit_apiKey: xendit_apiKey,
+                        currencyData: currencyData
+                    },
+                    success: function (data) {
+                        data = JSON.parse(data);
+                        loadcurrency();
+                        window.location.href = "<?php echo route('process_parcel_order_pay'); ?>";
+                    }
+                });
+            } else if (payment_method == "midtrans") {
+                var midtrans_enable = $("#midtrans_enable").val();
+                var midtrans_serverKey = $("#midtrans_serverKey").val();
+                var midtrans_isSandbox = $("#midtrans_isSandbox").val();
+                var order_json = {
+                    authorID: authorID,
+                    id: id_order,
+                    status: status,
+                    isSchedule: isSchedule,
+                    adminCommissionType: adminCommissionType,
+                    adminCommission: adminCommission,
+                    payment_method: payment_method,
+                    paymentCollectByReceiver: paymentCollectByReceiver,
+                    senderName: senderName,
+                    section_id: section_id,
+                    parcelCategoryId: parcelCategoryId,
+                    parcelType: parcelType,
+                    senderAddress: senderAddress,
+                    senderPhone: senderPhone,
+                    senderParcelWeight: senderParcelWeight,
+                    senderParcelWeightName: senderParcelWeightName,
+                    senderNote: senderNote,
+                    receiverNote: receiverNote,
+                    receiverAddress: receiverAddress,
+                    receiverName: receiverName,
+                    receiverPhone: receiverPhone,
+                    sender_address_lng: sender_address_lng,
+                    sender_address_lat: sender_address_lat,
+                    receiver_address_lng: receiver_address_lng,
+                    receiver_address_lat: receiver_address_lat,
+                    deliveryCharge: deliveryCharge,
+                    discount: discount,
+                    discountType: discountType,
+                    discountLabel: discountLabel,
+                    coupon_id: coupon_id,
+                    distance: parcelDeliveryKM,
+                    subTotal: parcelDeliveryCharge,
+                    senderPickupDateTime: senderPickupDateTime,
+                    receiverPickupDateTime: receiverPickupDateTime,
+                    parcelImages: parcelImages,
+                    taxSetting: taxSetting,
+                    senderZoneId: senderZoneId,
+                    receiverZoneId: receiverZoneId,
 
-                        };
-                        $.ajax({
-                            type: 'POST',
-                            url: "<?php echo route('parcel_order_proccessing'); ?>",
-                            data: {
-                                _token: '<?php echo csrf_token() ?>',
-                                order_json: order_json,
-                                payment_method: payment_method,
-                                authorName: authorName,
-                                total_pay: total_pay,
-                                midtrans_enable: midtrans_enable,
-                                midtrans_serverKey: midtrans_serverKey,
-                                midtrans_isSandbox: midtrans_isSandbox,
-                                currencyData: currencyData
-                            },
-                            success: function (data) {
-                                data = JSON.parse(data);
-                                loadcurrency();
-                                window.location.href = "<?php echo route('process_parcel_order_pay'); ?>";
-                            }
-                        });
-                    } else if (payment_method == "orangepay") {
-                        var orangepay_enable = $("#orangepay_enable").val();
-                        var orangepay_isSandbox = $("#orangepay_isSandbox").val();
-                        var orangepay_clientId = $("#orangepay_clientId").val();
-                        var orangepay_clientSecret = $("#orangepay_clientSecret").val();
-                        var orangepay_merchantKey = $("#orangepay_merchantKey").val();
-                        var order_json = {
-                            authorID: authorID,
-                            id: id_order,
-                            status: status,
-                            isSchedule: isSchedule,
-                            adminCommissionType: adminCommissionType,
-                            adminCommission: adminCommission,
-                            payment_method: payment_method,
-                            paymentCollectByReceiver: paymentCollectByReceiver,
-                            senderName: senderName,
-                            section_id: section_id,
-                            parcelCategoryId: parcelCategoryId,
-                            parcelType: parcelType,
-                            senderAddress: senderAddress,
-                            senderPhone: senderPhone,
-                            senderParcelWeight: senderParcelWeight,
-                            senderParcelWeightName: senderParcelWeightName,
-                            senderNote: senderNote,
-                             receiverNote: receiverNote,
-                            receiverAddress: receiverAddress,
-                            receiverName: receiverName,
-                            receiverPhone: receiverPhone,
-                            sender_address_lng: sender_address_lng,
-                            sender_address_lat: sender_address_lat,
-                            receiver_address_lng: receiver_address_lng,
-                            receiver_address_lat: receiver_address_lat,
-                            deliveryCharge: deliveryCharge,
-                            discount: discount,
-                            discountType: discountType,
-                            discountLabel: discountLabel,
-                            coupon_id: coupon_id,
-                            distance: parcelDeliveryKM,
-                            subTotal: parcelDeliveryCharge,
-                            senderPickupDateTime: senderPickupDateTime,
-                            receiverPickupDateTime: receiverPickupDateTime,
-                            parcelImages: parcelImages,
-                            taxSetting: taxSetting,
-                            senderZoneId: senderZoneId,
-                            receiverZoneId: receiverZoneId,
+                };
+                $.ajax({
+                    type: 'POST',
+                    url: "<?php echo route('parcel_order_proccessing'); ?>",
+                    data: {
+                        _token: '<?php echo csrf_token() ?>',
+                        order_json: order_json,
+                        payment_method: payment_method,
+                        authorName: authorName,
+                        total_pay: total_pay,
+                        midtrans_enable: midtrans_enable,
+                        midtrans_serverKey: midtrans_serverKey,
+                        midtrans_isSandbox: midtrans_isSandbox,
+                        currencyData: currencyData
+                    },
+                    success: function (data) {
+                        data = JSON.parse(data);
+                        loadcurrency();
+                        window.location.href = "<?php echo route('process_parcel_order_pay'); ?>";
+                    }
+                });
+            } else if (payment_method == "orangepay") {
+                var orangepay_enable = $("#orangepay_enable").val();
+                var orangepay_isSandbox = $("#orangepay_isSandbox").val();
+                var orangepay_clientId = $("#orangepay_clientId").val();
+                var orangepay_clientSecret = $("#orangepay_clientSecret").val();
+                var orangepay_merchantKey = $("#orangepay_merchantKey").val();
+                var order_json = {
+                    authorID: authorID,
+                    id: id_order,
+                    status: status,
+                    isSchedule: isSchedule,
+                    adminCommissionType: adminCommissionType,
+                    adminCommission: adminCommission,
+                    payment_method: payment_method,
+                    paymentCollectByReceiver: paymentCollectByReceiver,
+                    senderName: senderName,
+                    section_id: section_id,
+                    parcelCategoryId: parcelCategoryId,
+                    parcelType: parcelType,
+                    senderAddress: senderAddress,
+                    senderPhone: senderPhone,
+                    senderParcelWeight: senderParcelWeight,
+                    senderParcelWeightName: senderParcelWeightName,
+                    senderNote: senderNote,
+                    receiverNote: receiverNote,
+                    receiverAddress: receiverAddress,
+                    receiverName: receiverName,
+                    receiverPhone: receiverPhone,
+                    sender_address_lng: sender_address_lng,
+                    sender_address_lat: sender_address_lat,
+                    receiver_address_lng: receiver_address_lng,
+                    receiver_address_lat: receiver_address_lat,
+                    deliveryCharge: deliveryCharge,
+                    discount: discount,
+                    discountType: discountType,
+                    discountLabel: discountLabel,
+                    coupon_id: coupon_id,
+                    distance: parcelDeliveryKM,
+                    subTotal: parcelDeliveryCharge,
+                    senderPickupDateTime: senderPickupDateTime,
+                    receiverPickupDateTime: receiverPickupDateTime,
+                    parcelImages: parcelImages,
+                    taxSetting: taxSetting,
+                    senderZoneId: senderZoneId,
+                    receiverZoneId: receiverZoneId,
 
-                        };
-                        $.ajax({
-                            type: 'POST',
-                            url: "<?php echo route('parcel_order_proccessing'); ?>",
-                            data: {
-                                _token: '<?php echo csrf_token() ?>',
-                                order_json: order_json,
-                                payment_method: payment_method,
-                                authorName: authorName,
-                                total_pay: total_pay,
-                                orangepay_enable: orangepay_enable,
-                                orangepay_clientId: orangepay_clientId,
-                                orangepay_clientSecret: orangepay_clientSecret,
-                                orangepay_merchantKey: orangepay_merchantKey,
-                                currencyData: currencyData,
-                                orangepay_isSandbox: orangepay_isSandbox,
-                            },
-                            success: function (data) {
-                                data = JSON.parse(data);
-                                loadcurrency();
-                                window.location.href = "<?php echo route('process_parcel_order_pay'); ?>";
-                            }
-                        });
-                    } else {
+                };
+                $.ajax({
+                    type: 'POST',
+                    url: "<?php echo route('parcel_order_proccessing'); ?>",
+                    data: {
+                        _token: '<?php echo csrf_token() ?>',
+                        order_json: order_json,
+                        payment_method: payment_method,
+                        authorName: authorName,
+                        total_pay: total_pay,
+                        orangepay_enable: orangepay_enable,
+                        orangepay_clientId: orangepay_clientId,
+                        orangepay_clientSecret: orangepay_clientSecret,
+                        orangepay_merchantKey: orangepay_merchantKey,
+                        currencyData: currencyData,
+                        orangepay_isSandbox: orangepay_isSandbox,
+                    },
+                    success: function (data) {
+                        data = JSON.parse(data);
+                        loadcurrency();
+                        window.location.href = "<?php echo route('process_parcel_order_pay'); ?>";
+                    }
+                });
+            } else {
                 if (payment_method == "wallet") {
                     payment_method = "wallet";
                     if (parseFloat(wallet_amount) < parseFloat(total_pay)) {
@@ -1600,7 +1605,7 @@ session_start();
                         success: async function (data) {
                             if (payment_method == "wallet") {
                                 wallet_amount = parseFloat(wallet_amount) - parseFloat(total_pay);
-                                database.collection('users').doc(authorID).update({'wallet_amount': wallet_amount}).then(function (result) {
+                                database.collection('users').doc(authorID).update({ 'wallet_amount': wallet_amount }).then(function (result) {
                                     walletId = database.collection("tmp").doc().id;
                                     database.collection('wallet').doc(walletId).set({
                                         'amount': parseFloat(total_pay),

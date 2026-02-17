@@ -154,6 +154,18 @@
         return distance; // in kilometers
     }
 
+    // Round to nearest thousand
+    function roundToNearestThousand(amount) {
+        let num = parseFloat(amount);
+        if (isNaN(num)) return amount;
+        let remainder = num % 1000;
+        if (remainder >= 500) {
+            return Math.ceil(num / 1000) * 1000;
+        } else {
+            return Math.floor(num / 1000) * 1000;
+        }
+    }
+
     // Format currency
     function formatCurrency(amount) {
         const formatted = parseFloat(amount).toFixed(decimal_degits);
@@ -238,6 +250,9 @@
                     extraCharge = extraKm * extraKmFare;
                     currentFare = baseFare + extraCharge;
                 }
+
+                currentFare = roundToNearestThousand(currentFare);
+                extraCharge = roundToNearestThousand(extraCharge);
 
                 document.getElementById('live-fare').textContent = formatCurrency(currentFare);
                 document.getElementById('extra-km').textContent = extraKm.toFixed(2) + ' km';
