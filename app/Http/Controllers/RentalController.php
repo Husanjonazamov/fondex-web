@@ -15,6 +15,8 @@ use Xendit\Invoice\CreateInvoiceRequest;
 use Xendit\XenditSdkException;
 use GuzzleHttp\Client;
 
+use App\Helpers\PriceHelper;
+
 class RentalController extends Controller
 {
     public function __construct()
@@ -658,8 +660,7 @@ class RentalController extends Controller
             $rental_cart['coupon']['discount'] = $request->discount;
             $rental_cart['coupon']['discountType'] = $request->discountType;
 
-            $total_item_price = floatval($rental_cart['baseFarePrice']);
-            $total_item_price = round($total_item_price, 2);
+            $total_item_price = PriceHelper::roundToNearestThousand(floatval($rental_cart['baseFarePrice']));
             $rental_cart['total_item_price'] = $total_item_price;
 
             $discount_amount = 0;
@@ -700,7 +701,7 @@ class RentalController extends Controller
                 }
             }
             $rental_cart['tax_total_amount'] = $totalTaxAmount;
-            $total_item_price = $total_item_price + $totalTaxAmount;
+            $total_item_price = PriceHelper::roundToNearestThousand($total_item_price + $totalTaxAmount);
             $rental_cart['total_pay'] = $total_item_price;
             Session::put('rentalCarsData', $rental_cart);
             Session::save();

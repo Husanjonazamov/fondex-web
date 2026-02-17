@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Session;
 use Illuminate\Support\Facades\Storage;
 use Google\Client as Google_Client;
+use App\Helpers\PriceHelper;
 
 class ProductController extends Controller
 {
@@ -30,7 +31,7 @@ class ProductController extends Controller
      */
     public function productList($type, $id)
     {
-        
+
         return view('products.list', ['type' => $type, 'id' => $id]);
     }
 
@@ -94,9 +95,9 @@ class ProductController extends Controller
             if (@$deliveryChargemain && @$address_lat && @$address_lng && @$vendor_latitude && @$vendor_longitude) {
                 $deliveryChargemain = json_decode($deliveryChargemain);
                 if (!empty($deliveryChargemain)) {
-                    if (! empty($req['distanceType'])) {
+                    if (!empty($req['distanceType'])) {
                         $distanceType = $req['distanceType'];
-                    }else{
+                    } else {
                         $distanceType = 'km';
                     }
                     $delivery_charges_per_km = $deliveryChargemain->delivery_charges_per_km;
@@ -106,7 +107,7 @@ class ProductController extends Controller
                     if ($minimum_delivery_charges_within_km > $kmradius) {
                         $cart['deliverychargemain'] = $minimum_delivery_charges;
                     } else {
-                        $cart['deliverychargemain'] = round(($kmradius * $delivery_charges_per_km), 2);
+                        $cart['deliverychargemain'] = PriceHelper::roundToNearestThousand($kmradius * $delivery_charges_per_km);
                     }
                     $cart['deliverykm'] = $kmradius;
                 }
@@ -235,11 +236,11 @@ class ProductController extends Controller
         $dist = rad2deg($dist);
         $miles = $dist * 60 * 1.1515;
         $unit = strtoupper($unit);
-        
+
         if ($unit == "KM") {
-          
+
             return ($miles * 1.609344);
-        }  else {
+        } else {
             return $miles;
         }
     }
@@ -313,7 +314,7 @@ class ProductController extends Controller
             if ($value['extra_price']) {
                 $extra_price = $value['extra_price'];
             }
-          
+
             if (isset($value['extra']) && $value['extra'] != null && $value['extra'] != '' && $value['extra'] != 'null') {
                 $extra = explode(',', $value['extra']);
             } else {
@@ -757,9 +758,9 @@ class ProductController extends Controller
         Session::put('payfast_payment_token', '');
         Session::put('success', 'Your order has been successful!');
 
-        if(Storage::disk('local')->has('firebase/credentials.json')){
-            
-            $client= new Google_Client();
+        if (Storage::disk('local')->has('firebase/credentials.json')) {
+
+            $client = new Google_Client();
             $client->setAuthConfig(storage_path('app/firebase/credentials.json'));
             $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
             $client->refreshTokenWithAssertion();
@@ -767,11 +768,11 @@ class ProductController extends Controller
             $access_token = $client_token['access_token'];
 
             $fcm_token = $request->fcm;
-            
-            if(!empty($access_token) && !empty($fcm_token)){
+
+            if (!empty($access_token) && !empty($fcm_token)) {
 
                 $projectId = env('FIREBASE_PROJECT_ID');
-                $url = 'https://fcm.googleapis.com/v1/projects/'.$projectId.'/messages:send';
+                $url = 'https://fcm.googleapis.com/v1/projects/' . $projectId . '/messages:send';
 
                 $data = [
                     'message' => [
@@ -790,7 +791,7 @@ class ProductController extends Controller
 
                 $headers = array(
                     'Content-Type: application/json',
-                    'Authorization: Bearer '.$access_token
+                    'Authorization: Bearer ' . $access_token
                 );
 
                 $ch = curl_init();
@@ -801,26 +802,26 @@ class ProductController extends Controller
                 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-                
+
                 $result = curl_exec($ch);
                 if ($result === FALSE) {
                     die('FCM Send Error: ' . curl_error($ch));
                 }
                 curl_close($ch);
-                $result=json_decode($result);
+                $result = json_decode($result);
 
                 $response = array();
                 $response['success'] = true;
                 $response['message'] = 'Notification successfully sent.';
                 $response['result'] = $result;
 
-            }else{
+            } else {
                 $response = array();
                 $response['success'] = false;
                 $response['message'] = 'Missing sender id or token to send notification.';
             }
 
-        }else{
+        } else {
             $response = array();
             $response['success'] = false;
             $response['message'] = 'Firebase credentials file not found.';
@@ -829,7 +830,7 @@ class ProductController extends Controller
         Session::save();
 
         $order_response = array('status' => true, 'order_complete' => true, 'html' => view('vendor.cart_item', ['cart' => $cart, 'order_complete' => true, 'is_checkout' => 1])->render(), 'response' => $response);
-       
+
         return response()->json($order_response);
     }
 

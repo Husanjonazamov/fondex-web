@@ -14,6 +14,7 @@ use Xendit\Invoice\CreateInvoiceRequest;
 use Xendit\XenditSdkException;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
+use App\Helpers\PriceHelper;
 
 class ParcelController extends Controller
 {
@@ -82,8 +83,8 @@ class ParcelController extends Controller
             if (!empty($delivery_charge)) {
                 // $kmradius = $this->distance($sender_address_lng, $sender_address_lat, $receiver_address_lng, $receiver_address_lat, 'K');
                 $mapType = $req['mapType'] ?? 'google'; // or however you store it
-               
-                if($mapType == 'google'){
+
+                if ($mapType == 'google') {
                     $kmradius = $this->distance(
                         $sender_address_lat,
                         $sender_address_lng,
@@ -91,7 +92,7 @@ class ParcelController extends Controller
                         $receiver_address_lng,
                         /* 'K' */
                     );
-                }else{
+                } else {
                     $kmradius = $this->getDrivingDistance(
                         $sender_address_lat,
                         $sender_address_lng,
@@ -101,7 +102,7 @@ class ParcelController extends Controller
                     );
                 }
 
-                $parcelDeliveryCharge = round($kmradius * $delivery_charge);
+                $parcelDeliveryCharge = PriceHelper::roundToNearestThousand($kmradius * $delivery_charge);
                 $total_pay = $parcelDeliveryCharge;
             }
         }
@@ -120,7 +121,7 @@ class ParcelController extends Controller
             }
         }
         $parcel_cart['tax_total_amount'] = $totalTaxAmount;
-        $total_pay = $total_pay + $totalTaxAmount;
+        $total_pay = PriceHelper::roundToNearestThousand($total_pay + $totalTaxAmount);
         $parcel_cart['section_id'] = $section_id;
         $parcel_cart['parcelType'] = $parcelType;
         $parcel_cart['parcelCategoryId'] = $parcelCategoryId;
@@ -140,7 +141,7 @@ class ParcelController extends Controller
         $parcel_cart['senderZoneId'] = $senderZoneId;
         $parcel_cart['receiver_address_lng'] = $receiver_address_lng;
         $parcel_cart['receiver_address_lat'] = $receiver_address_lat;
-         $parcel_cart['receiverZoneId'] = $receiverZoneId;
+        $parcel_cart['receiverZoneId'] = $receiverZoneId;
         $parcel_cart['total_pay'] = $total_pay;
         $parcel_cart['deliveryCharge'] = $delivery_charge;
         $parcel_cart['coupon'] = [];
@@ -166,8 +167,8 @@ class ParcelController extends Controller
         $dist = 6378.8 * acos($dist);
         return $dist;
     } */
-    
-   
+
+
     function distance($lat1, $lon1, $lat2, $lon2/* , $unit = 'K' */)
     {
         $earthRadius = 6371; // in kilometers
@@ -204,7 +205,7 @@ class ParcelController extends Controller
             $parcel_cart['coupon']['discount'] = $request->discount;
             $parcel_cart['coupon']['discountType'] = $request->discountType;
             $total_item_price = $parcel_cart['parcelDeliveryCharge'];
-            
+
             $discount_amount = 0;
             if (@$parcel_cart['coupon'] && $parcel_cart['coupon']['discountType']) {
                 $discountType = $parcel_cart['coupon']['discountType'];
@@ -242,11 +243,11 @@ class ParcelController extends Controller
                     $tax_total_amount += floatval($tax);
                 }
             }
-            
+
             $parcel_cart['tax_total_amount'] = $tax_total_amount;
             $total_item_price = $total_item_price + $tax_total_amount;
             $parcel_cart['total_pay'] = $total_item_price;
-           
+
             Session::put('parcel_cart', $parcel_cart);
             Session::save();
 
@@ -312,7 +313,7 @@ class ParcelController extends Controller
                 \Paystack\Paystack::init($paystack_secret_key);
                 $payment = \Paystack\Transaction::initialize([
                     'email' => $email,
-                    'amount' => (int)($total_pay * 100),
+                    'amount' => (int) ($total_pay * 100),
                     'callback_url' => route('parcel_success'),
                 ]);
                 Session::put('paystack_authorization_url', $payment->authorization_url);
@@ -411,9 +412,9 @@ class ParcelController extends Controller
                 $authorName = $parcel_cart['cart_order']['authorName'];
                 $total_pay = $parcel_cart['cart_order']['total_pay'];
                 return view('parcel.paypal', ['is_checkout' => 1, 'parcel_cart' => $parcel_cart, 'id' => $user->uuid, 'email' => $email, 'authorName' => $authorName, 'amount' => $total_pay, 'paypalSecret' => $paypalSecret, 'paypalKey' => $paypalKey, 'cart_order' => $parcel_cart['cart_order']]);
-            }else if($parcel_cart['cart_order']['payment_method']=='xendit'){
-                $xendit_enable=$parcel_cart['cart_order']['xendit_enable'];
-                $xendit_apiKey=$parcel_cart['cart_order']['xendit_apiKey'];
+            } else if ($parcel_cart['cart_order']['payment_method'] == 'xendit') {
+                $xendit_enable = $parcel_cart['cart_order']['xendit_enable'];
+                $xendit_apiKey = $parcel_cart['cart_order']['xendit_apiKey'];
                 if (isset($xendit_enable) && $xendit_enable == true) {
                     $total_pay = $parcel_cart['cart_order']['total_pay'];
                     //$currency = $parcel_cart['cart_order']['currencyData']['code'];
@@ -428,8 +429,8 @@ class ParcelController extends Controller
                     $apiInstance = new InvoiceApi();
                     $create_invoice_request = new CreateInvoiceRequest([
                         'external_id' => $token,
-                        'description' => '#'.$token.' Order place',
-                        'amount' => (int)($total_pay)*1000,
+                        'description' => '#' . $token . ' Order place',
+                        'amount' => (int) ($total_pay) * 1000,
                         'invoice_duration' => 300,
                         'currency' => $currency,
                         'success_redirect_url' => $success_url,
@@ -445,7 +446,7 @@ class ParcelController extends Controller
                         ], 500);
                     }
                 }
-            } else if($parcel_cart['cart_order']['payment_method']=='midtrans'){
+            } else if ($parcel_cart['cart_order']['payment_method'] == 'midtrans') {
                 $midtrans_enable = $parcel_cart['cart_order']['midtrans_enable'];
                 $midtrans_serverKey = $parcel_cart['cart_order']['midtrans_serverKey'];
                 $midtrans_isSandbox = $parcel_cart['cart_order']['midtrans_isSandbox'];
@@ -466,13 +467,13 @@ class ParcelController extends Controller
                     $payload = [
                         'transaction_details' => [
                             'order_id' => $token,
-                            'gross_amount' => (int)($total_pay)*1000,
+                            'gross_amount' => (int) ($total_pay) * 1000,
                         ],
                         'usage_limit' => 1,
-                        'callbacks'=> [
-                            'error'=> $fail_url,
-                            'unfinish'=> $fail_url,
-                            'close'=> $fail_url,
+                        'callbacks' => [
+                            'error' => $fail_url,
+                            'unfinish' => $fail_url,
+                            'close' => $fail_url,
                             'finish' => $success_url,
                         ]
                     ];
@@ -496,7 +497,7 @@ class ParcelController extends Controller
                         return response()->json(['error' => $e->getMessage()], 500);
                     }
                 }
-            } else if($parcel_cart['cart_order']['payment_method']=='orangepay'){
+            } else if ($parcel_cart['cart_order']['payment_method'] == 'orangepay') {
                 $orangepay_enable = $parcel_cart['cart_order']['orangepay_enable'];
                 $orangepay_isSandbox = $parcel_cart['cart_order']['orangepay_isSandbox'];
                 Session::put('orangepay_isSandbox', $orangepay_isSandbox);
@@ -504,7 +505,7 @@ class ParcelController extends Controller
                 $orangepay_clientId = $parcel_cart['cart_order']['orangepay_clientId'];
                 $orangepay_clientSecret = $parcel_cart['cart_order']['orangepay_clientSecret'];
                 $orangepay_merchantKey = $parcel_cart['cart_order']['orangepay_merchantKey'];
-                $token = $this->getAccessToken($orangepay_clientId,$orangepay_clientSecret);
+                $token = $this->getAccessToken($orangepay_clientId, $orangepay_clientSecret);
                 Session::put('orangepay_access_token', $token);
                 Session::save();
 
@@ -527,7 +528,7 @@ class ParcelController extends Controller
                         'merchant_key' => $orangepay_merchantKey,
                         'currency' => $currency,
                         'order_id' => $orangepay_token,
-                        'amount' => (int)($total_pay),
+                        'amount' => (int) ($total_pay),
                         'return_url' => $success_url,
                         'cancel_url' => $fail_url,
                         'notif_url' => $notify_url,

@@ -13,14 +13,27 @@
                             <div class="input-group">
                                 <input placeholder="Delivery Area" type="text" id="address_line1" class="form-control">
                                 <div class="input-group-append">
-                                    <button onclick="getCurrentLocationAddress1()" type="button" class="btn btn-outline-secondary"><i class="feather-map-pin"></i></button>
+                                    <button onclick="getCurrentLocationAddress1()" type="button"
+                                        class="btn btn-outline-secondary"><i class="feather-map-pin"></i></button>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-12 form-group"><label class="form-label">{{ trans('lang.landmark') }}</label><input placeholder="{{ trans('lang.footer') }}" value="" id="address_line2" type="text" class="form-control"></div>
-                        <div class="col-md-12 form-group"><label class="form-label">{{ trans('lang.zip_code') }}</label><input placeholder="{{ trans('lang.postalcode') }}" id="address_zipcode" type="text" class="form-control"></div>
-                        <div class="col-md-12 form-group"><label class="form-label">{{ trans('lang.city') }}</label><input placeholder="{{ trans('lang.city') }}" id="address_city" type="text" class="form-control"></div>
-                        <div class="col-md-12 form-group"><label class="form-label">{{ trans('lang.country') }}</label><input placeholder="{{ trans('lang.country') }}" id="address_country" type="text" class="form-control">
+                        <div class="col-md-12 form-group"><label
+                                class="form-label">{{ trans('lang.landmark') }}</label><input
+                                placeholder="{{ trans('lang.footer') }}" value="" id="address_line2" type="text"
+                                class="form-control"></div>
+                        <div class="col-md-12 form-group"><label
+                                class="form-label">{{ trans('lang.zip_code') }}</label><input
+                                placeholder="{{ trans('lang.postalcode') }}" id="address_zipcode" type="text"
+                                class="form-control"></div>
+                        <div class="col-md-12 form-group"><label
+                                class="form-label">{{ trans('lang.city') }}</label><input
+                                placeholder="{{ trans('lang.city') }}" id="address_city" type="text"
+                                class="form-control"></div>
+                        <div class="col-md-12 form-group"><label
+                                class="form-label">{{ trans('lang.country') }}</label><input
+                                placeholder="{{ trans('lang.country') }}" id="address_country" type="text"
+                                class="form-control">
                         </div>
                         <input type="hidden" name="address_lat" id="address_lat">
                         <input type="hidden" name="address_lng" id="address_lng">
@@ -29,17 +42,21 @@
             </div>
             <div class="modal-footer p-0 border-0">
                 <div class="col-12 m-0 p-0">
-                    <button type="button" id="close_button" class="close" data-dismiss="modal" aria-label="Close" hidden></button>
-                    <button type="button" class="btn btn-primary btn-lg btn-block" onclick="saveShippingAddress()">{{ trans('lang.save_changes') }}</button>
+                    <button type="button" id="close_button" class="close" data-dismiss="modal" aria-label="Close"
+                        hidden></button>
+                    <button type="button" class="btn btn-primary btn-lg btn-block"
+                        onclick="saveShippingAddress()">{{ trans('lang.save_changes') }}</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 <span style="display: none;">
-    <button type="button" class="btn btn-primary" id="order_notification_modal" data-toggle="modal" data-target="#order_notification">{{ trans('lang.large_modal') }}</button>
+    <button type="button" class="btn btn-primary" id="order_notification_modal" data-toggle="modal"
+        data-target="#order_notification">{{ trans('lang.large_modal') }}</button>
 </span>
-<div class="modal fade" id="order_notification" tabindex="-1" role="dialog" aria-labelledby="notification_accepted_order_by_vendor" aria-hidden="true">
+<div class="modal fade" id="order_notification" tabindex="-1" role="dialog"
+    aria-labelledby="notification_accepted_order_by_vendor" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered notification-main" role="document">
         <div class="modal-content">
             <div class="modal-header justify-content-center">
@@ -53,23 +70,28 @@
             </div>
             <div class="modal-footer">
                 <?php if (@$_COOKIE['service_type'] == "Parcel Delivery Service") { ?>
-                <button type="button" class="btn btn-primary"><a href="{{ url('parcel_orders') }}" id="order_notification_url">{{ trans('lang.Go') }}</a>
+                <button type="button" class="btn btn-primary"><a href="{{ url('parcel_orders') }}"
+                        id="order_notification_url">{{ trans('lang.Go') }}</a>
                 </button>
                 <?php } else if (@$_COOKIE['service_type'] == "Rental Service") { ?>
-                <button type="button" class="btn btn-primary"><a href="{{ url('rental_orders') }}" id="order_notification_url">{{ trans('lang.Go') }}</a>
+                <button type="button" class="btn btn-primary"><a href="{{ url('rental_orders') }}"
+                        id="order_notification_url">{{ trans('lang.Go') }}</a>
                 </button>
-                <?php } else { ?>
-                <button type="button" class="btn btn-primary"><a href="{{ url('my_order') }}" id="order_notification_url">{{ trans('lang.Go') }}</a>
+                <?php    } else { ?>
+                <button type="button" class="btn btn-primary"><a href="{{ url('my_order') }}"
+                        id="order_notification_url">{{ trans('lang.Go') }}</a>
                 </button>
-                <?php } ?>
+                <?php    } ?>
             </div>
         </div>
     </div>
 </div>
 <span style="display: none;">
-    <button type="button" class="btn btn-primary" id="dinein_order_notification_modal" data-toggle="modal" data-target="#dinein_order_notification">{{ trans('lang.large_modal') }}</button>
+    <button type="button" class="btn btn-primary" id="dinein_order_notification_modal" data-toggle="modal"
+        data-target="#dinein_order_notification">{{ trans('lang.large_modal') }}</button>
 </span>
-<div class="modal fade" id="dinein_order_notification" tabindex="-1" role="dialog" aria-labelledby="notification_accepted_order_by_vendor" aria-hidden="true">
+<div class="modal fade" id="dinein_order_notification" tabindex="-1" role="dialog"
+    aria-labelledby="notification_accepted_order_by_vendor" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered notification-main" role="document">
         <div class="modal-content">
             <div class="modal-header justify-content-center">
@@ -82,7 +104,8 @@
                 <h6><span id="restaurnat_name" class="dinein_order_notification_message"></span></h6>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary"><a href="{{ url('my_dinein') }}" id="dinein_order_notification_url">{{ trans('lang.go') }}</a>
+                <button type="button" class="btn btn-primary"><a href="{{ url('my_dinein') }}"
+                        id="dinein_order_notification_url">{{ trans('lang.go') }}</a>
                 </button>
             </div>
         </div>
@@ -107,7 +130,8 @@
 <footer class="section-footer border-top bg-dark">
     <div class="footerTemplate"></div>
     <div class="select-sec-btn">
-        <a href="#" data-toggle="modal" id="select_store_model_call" data-target="#select_store_model">{{ trans('lang.select_section') }}</a>
+        <a href="#" data-toggle="modal" id="select_store_model_call"
+            data-target="#select_store_model">{{ trans('lang.select_section') }}</a>
     </div>
 </footer>
 <script type="text/javascript" src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
@@ -135,9 +159,9 @@
 <script type="text/javascript">
     var database = firebase.firestore();
     <?php $id = null;
-    if (Auth::user()) {
-        $id = Auth::user()->getvendorId();
-    } ?>
+if (Auth::user()) {
+    $id = Auth::user()->getvendorId();
+} ?>
     var cuser_id = '<?php echo $id; ?>';
     var dine_in_enable = false;
     var place = [];
@@ -154,7 +178,7 @@
     var mapType = '';
     var type = '';
     var mapTypeDoc = database.collection('settings').doc('DriverNearBy');
-    mapTypeDoc.get().then(async function(snapshots) {
+    mapTypeDoc.get().then(async function (snapshots) {
         var mapTypeData = snapshots.data();
         mapType = mapTypeData.selectedMapType;
     })
@@ -166,7 +190,7 @@
             var section_id = getCookie('section_id');
             var subscriptionModel = false;
             var businessModel = database.collection('settings').doc("vendor");
-            await businessModel.get().then(async function(snapshots) {
+            await businessModel.get().then(async function (snapshots) {
                 var businessModelSettings = snapshots.data();
                 if (businessModelSettings.hasOwnProperty('subscription_model') && businessModelSettings.subscription_model == true) {
                     subscriptionModel = true;
@@ -174,7 +198,7 @@
             });
             var commisionModel = false;
             var commissionModel = database.collection('sections').doc(section_id);
-            await commissionModel.get().then(async function(snapshots) {
+            await commissionModel.get().then(async function (snapshots) {
                 var commissionSetting = snapshots.data();
                 if (commissionSetting && commissionSetting.adminCommision && commissionSetting.adminCommision.enable) {
                     commisionModel = true;
@@ -216,7 +240,7 @@
             if (userData.subscriptionExpiryDate && userData.subscriptionExpiryDate != null) {
                 const subscriptionExpiryDate = userData.subscriptionExpiryDate;
                 if (subscriptionExpiryDate && new Date(subscriptionExpiryDate.seconds * 1000) < new Date()) {
-                    (role == 'provider') ? invalidUserIds.push(userData.id): invalidUserIds.push(userData.author);
+                    (role == 'provider') ? invalidUserIds.push(userData.id) : invalidUserIds.push(userData.author);
                     return;
                 }
             }
@@ -224,11 +248,11 @@
             const orderLimit = userData.subscription_plan ? userData.subscription_plan.orderLimit : 0;
             if (orderLimit != '-1') {
                 if (parseInt(orderCount) == 0) {
-                    (role == 'provider') ? invalidUserIds.push(userData.id): invalidUserIds.push(userData.author);
+                    (role == 'provider') ? invalidUserIds.push(userData.id) : invalidUserIds.push(userData.author);
                 }
             }
         } else {
-            (role == 'provider') ? invalidUserIds.push(userData.id): invalidUserIds.push(userData.author);
+            (role == 'provider') ? invalidUserIds.push(userData.id) : invalidUserIds.push(userData.author);
         }
     }
     async function getUserItemLimit(userId) {
@@ -297,7 +321,7 @@
             var section_id = getCookie('section_id');
             var subscriptionModel = false;
             var businessModel = database.collection('settings').doc("vendor");
-            await businessModel.get().then(async function(snapshots) {
+            await businessModel.get().then(async function (snapshots) {
                 var businessModelSettings = snapshots.data();
                 if (businessModelSettings.hasOwnProperty('subscription_model') && businessModelSettings.subscription_model == true) {
                     subscriptionModel = true;
@@ -305,14 +329,14 @@
             });
             var commisionModel = false;
             var commissionModel = database.collection('sections').doc(section_id);
-            await commissionModel.get().then(async function(snapshots) {
+            await commissionModel.get().then(async function (snapshots) {
                 var commissionSetting = snapshots.data();
                 if (commissionSetting && commissionSetting.adminCommision && commissionSetting.adminCommision.enable) {
                     commisionModel = true;
                 }
             });
             if (subscriptionModel || commisionModel) {
-                await database.collection('users').where('id', '==', userId).get().then(async function(snapshot) {
+                await database.collection('users').where('id', '==', userId).get().then(async function (snapshot) {
                     if (snapshot.docs.length > 0) {
                         var data = snapshot.docs[0].data();
                         if (data.hasOwnProperty('subscription_plan') && data.subscription_plan != null && data.subscription_plan != '') {
@@ -360,7 +384,7 @@
         return inValidServiceIds;
     }
     async function loadGoogleMapsScript() {
-        await database.collection('settings').doc("googleMapKey").get().then(function(googleMapKeySnapshotsHeader) {
+        await database.collection('settings').doc("googleMapKey").get().then(function (googleMapKeySnapshotsHeader) {
             var placeholderImageHeaderData = googleMapKeySnapshotsHeader.data();
             googleMapKey = placeholderImageHeaderData.key;
             const script = document.createElement('script');
@@ -369,7 +393,7 @@
             } else {
                 script.src = "https://unpkg.com/leaflet/dist/leaflet.js";
             }
-            script.onload = function() {
+            script.onload = function () {
                 if (mapType == 'google') {
                     initialize();
                 } else {
@@ -397,13 +421,13 @@
     loadGoogleMapsScript();
     var placeholderImage = '';
     var placeholder = database.collection('settings').doc('placeHolderImage');
-    placeholder.get().then(async function(snapshotsimage) {
+    placeholder.get().then(async function (snapshotsimage) {
         var placeholderImageData = snapshotsimage.data();
         placeholderImage = placeholderImageData.image;
     })
     var service_type = getCookie('service_type');
     var footerRef = database.collection('settings').doc('footerTemplate');
-    footerRef.get().then(async function(snapshots) {
+    footerRef.get().then(async function (snapshots) {
         var footerData = snapshots.data();
         if (footerData != undefined) {
             if (footerData.footerTemplate && footerData.footerTemplate != "" && footerData.footerTemplate != undefined) {
@@ -416,7 +440,7 @@
         if (mapType == 'google') {
             if (input) {
                 var autocomplete = new google.maps.places.Autocomplete(input);
-                google.maps.event.addListener(autocomplete, 'place_changed', function() {
+                google.maps.event.addListener(autocomplete, 'place_changed', function () {
                     var place = autocomplete.getPlace();
                     address_lat = place.geometry.location.lat();
                     address_lng = place.geometry.location.lng();
@@ -431,8 +455,8 @@
             }
             // Autocomplete setup for OSM
             $('#pickLocation').autocomplete({
-                source: function(request, response) {
-                    getPlaceSuggestions(request.term).done(function(data) {
+                source: function (request, response) {
+                    getPlaceSuggestions(request.term).done(function (data) {
                         response(data.map(place => ({
                             label: place.display_name,
                             lat: place.lat,
@@ -441,7 +465,7 @@
                         })));
                     });
                 },
-                select: function(event, ui) {
+                select: function (event, ui) {
                     address_lat = ui.item.lat;
                     address_lng = ui.item.lon;
                 },
@@ -454,7 +478,7 @@
         if (mapType == 'google') {
             if (input) {
                 var autocomplete = new google.maps.places.Autocomplete(input);
-                google.maps.event.addListener(autocomplete, 'place_changed', function() {
+                google.maps.event.addListener(autocomplete, 'place_changed', function () {
                     var place = autocomplete.getPlace();
                     drop_address_lat = place.geometry.location.lat();
                     drop_address_lng = place.geometry.location.lng();
@@ -469,8 +493,8 @@
             }
             // Autocomplete setup for OSM
             $('#dropLocation').autocomplete({
-                source: function(request, response) {
-                    getPlaceSuggestions(request.term).done(function(data) {
+                source: function (request, response) {
+                    getPlaceSuggestions(request.term).done(function (data) {
                         response(data.map(place => ({
                             label: place.display_name,
                             lat: place.lat,
@@ -479,7 +503,7 @@
                         })));
                     });
                 },
-                select: function(event, ui) {
+                select: function (event, ui) {
                     drop_address_lat = ui.item.lat;
                     drop_address_lng = ui.item.lon;
                 },
@@ -496,8 +520,8 @@
         }
         // Autocomplete setup
         $('#senderAddress').autocomplete({
-            source: function(request, response) {
-                getPlaceSuggestions(request.term).done(function(data) {
+            source: function (request, response) {
+                getPlaceSuggestions(request.term).done(function (data) {
                     response(data.map(place => ({
                         label: place.display_name,
                         lat: place.lat,
@@ -508,8 +532,8 @@
             }
         });
         $('#receiver_address').autocomplete({
-            source: function(request, response) {
-                getPlaceSuggestions(request.term).done(function(data) {
+            source: function (request, response) {
+                getPlaceSuggestions(request.term).done(function (data) {
                     response(data.map(place => ({
                         label: place.display_name,
                         lat: place.lat,
@@ -520,8 +544,8 @@
             }
         });
         $('#sender_address_schedule').autocomplete({
-            source: function(request, response) {
-                getPlaceSuggestions(request.term).done(function(data) {
+            source: function (request, response) {
+                getPlaceSuggestions(request.term).done(function (data) {
                     response(data.map(place => ({
                         label: place.display_name,
                         lat: place.lat,
@@ -532,8 +556,8 @@
             }
         });
         $('#receiver_address_schedule').autocomplete({
-            source: function(request, response) {
-                getPlaceSuggestions(request.term).done(function(data) {
+            source: function (request, response) {
+                getPlaceSuggestions(request.term).done(function (data) {
                     response(data.map(place => ({
                         label: place.display_name,
                         lat: place.lat,
@@ -548,7 +572,7 @@
         var input = document.getElementById('senderAddress');
         if (input) {
             var autocomplete = new google.maps.places.Autocomplete(input);
-            autocomplete.addListener('place_changed', function() {
+            autocomplete.addListener('place_changed', function () {
                 var place = autocomplete.getPlace();
                 if (place && place.geometry) {
                     address_name = place.name || place.formatted_address || '';
@@ -561,7 +585,7 @@
         var receiver_address = document.getElementById('receiver_address');
         if (receiver_address) {
             var autocomplete = new google.maps.places.Autocomplete(receiver_address);
-            autocomplete.addListener('place_changed', function() {
+            autocomplete.addListener('place_changed', function () {
                 var place = autocomplete.getPlace();
                 if (place && place.geometry) {
                     address_name = place.name || place.formatted_address || '';
@@ -574,7 +598,7 @@
         var sender_address_schedule = document.getElementById('sender_address_schedule');
         if (sender_address_schedule) {
             var autocomplete = new google.maps.places.Autocomplete(sender_address_schedule);
-            autocomplete.addListener('place_changed', function() {
+            autocomplete.addListener('place_changed', function () {
                 var place = autocomplete.getPlace();
                 if (place && place.geometry) {
                     address_name = place.name || place.formatted_address || '';
@@ -587,7 +611,7 @@
         var receiver_address_schedule = document.getElementById('receiver_address_schedule');
         if (receiver_address_schedule) {
             var autocomplete = new google.maps.places.Autocomplete(receiver_address_schedule);
-            autocomplete.addListener('place_changed', function() {
+            autocomplete.addListener('place_changed', function () {
                 var place = autocomplete.getPlace();
                 if (place && place.geometry) {
                     address_name = place.name || place.formatted_address || '';
@@ -617,7 +641,7 @@
             <?php } ?>
             if ($("#section_lists").html() == '') {
                 var sectionsRef = database.collection('sections').where('isActive', '==', true);
-                sectionsRef.get().then(async function(snapshots) {
+                sectionsRef.get().then(async function (snapshots) {
                     var sections = [];
                     snapshots.docs.forEach((section) => {
                         var datas = section.data();
@@ -648,11 +672,11 @@
     if (cuser_id != "") {
         var userDetailsRef = database.collection('users').where('id', "==", cuser_id);
     }
-    $('#select_store_model_call').bind('click', function() {
+    $('#select_store_model_call').bind('click', function () {
         if ($("#section_lists").html() == '') {
             var sectionsRef = database.collection('sections').where('isActive', '==', true);
             var active_section_id = "<?php echo @$_COOKIE['section_id']; ?>";
-            sectionsRef.get().then(async function(snapshots) {
+            sectionsRef.get().then(async function (snapshots) {
                 var sections = [];
                 snapshots.docs.forEach((section) => {
                     var datas = section.data();
@@ -691,8 +715,8 @@
         }
         // Autocomplete setup
         $('#user_locationnew').autocomplete({
-            source: function(request, response) {
-                getPlaceSuggestions(request.term).done(function(data) {
+            source: function (request, response) {
+                getPlaceSuggestions(request.term).done(function (data) {
                     response(data.map(place => ({
                         label: place.display_name,
                         lat: place.lat,
@@ -701,7 +725,7 @@
                     })));
                 });
             },
-            select: function(event, ui) {
+            select: function (event, ui) {
                 window.location.reload(true);
                 var address_name = ui.item.label;
                 var address_lat = ui.item.lat;
@@ -733,12 +757,12 @@
         }
         var input = document.getElementById('user_locationnew');
         var autocomplete = new google.maps.places.Autocomplete(input);
-        google.maps.event.addListener(autocomplete, 'place_changed', function() {
+        google.maps.event.addListener(autocomplete, 'place_changed', function () {
             var place = autocomplete.getPlace();
             address_name = place.name;
             address_lat = place.geometry.location.lat();
             address_lng = place.geometry.location.lng();
-            $.each(place.address_components, function(i, address_component) {
+            $.each(place.address_components, function (i, address_component) {
                 address_name1 = '';
                 if (address_component.types[0] == "premise") {
                     if (address_name1 == '') {
@@ -775,73 +799,73 @@
     async function getCurrentLocationAddress1() {
         var geocoder = new google.maps.Geocoder();
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(async function(position) {
-                    var address_city = "";
-                    var address_country = "";
-                    var address_state = "";
-                    var address_street = "";
-                    var address_street2 = "";
-                    var address_street3 = "";
-                    var pos = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    var geolocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-                    var circle = new google.maps.Circle({
-                        center: geolocation,
-                        radius: position.coords.accuracy
-                    });
-                    var location = new google.maps.LatLng(pos['lat'], pos['lng']);
-                    geocoder.geocode({
-                        'latLng': location
-                    }, async function(results, status) {
-                        if (status == google.maps.GeocoderStatus.OK) {
-                            if (results.length > 0) {
-                                document.getElementById('user_locationnew').value = results[0].formatted_address;
+            navigator.geolocation.getCurrentPosition(async function (position) {
+                var address_city = "";
+                var address_country = "";
+                var address_state = "";
+                var address_street = "";
+                var address_street2 = "";
+                var address_street3 = "";
+                var pos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                var geolocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                var circle = new google.maps.Circle({
+                    center: geolocation,
+                    radius: position.coords.accuracy
+                });
+                var location = new google.maps.LatLng(pos['lat'], pos['lng']);
+                geocoder.geocode({
+                    'latLng': location
+                }, async function (results, status) {
+                    if (status == google.maps.GeocoderStatus.OK) {
+                        if (results.length > 0) {
+                            document.getElementById('user_locationnew').value = results[0].formatted_address;
+                            address_name1 = '';
+                            $.each(results[0].address_components, async function (i, address_component) {
                                 address_name1 = '';
-                                $.each(results[0].address_components, async function(i, address_component) {
-                                    address_name1 = '';
-                                    if (address_component.types[0] == "premise") {
-                                        if (address_name1 == '') {
-                                            address_name1 = address_component.long_name;
-                                        } else {
-                                            address_name2 = address_component.long_name;
-                                        }
-                                    } else if (address_component.types[0] == "postal_code") {
-                                        address_zip = address_component.long_name;
-                                    } else if (address_component.types[0] == "locality") {
-                                        address_city = address_component.long_name;
-                                    } else if (address_component.types[0] == "administrative_area_level_1") {
-                                        address_state = address_component.long_name;
-                                    } else if (address_component.types[0] == "country") {
-                                        address_country = address_component.long_name;
-                                    } else if (address_component.types[0] == "street_number") {
-                                        address_street = address_component.long_name;
-                                    } else if (address_component.types[0] == "route") {
-                                        address_street2 = address_component.long_name;
-                                    } else if (address_component.types[0] == "political") {
-                                        address_street3 = address_component.long_name;
+                                if (address_component.types[0] == "premise") {
+                                    if (address_name1 == '') {
+                                        address_name1 = address_component.long_name;
+                                    } else {
+                                        address_name2 = address_component.long_name;
                                     }
-                                });
-                                address_lat = results[0].geometry.location.lat();
-                                address_lng = results[0].geometry.location.lng();
-                                $("#address_lat").val(address_lat);
-                                $("#address_lng").val(address_lng);
-                                if (results[0].formatted_address) {
-                                    $("#address_line1").val(results[0].formatted_address);
-                                } else {
-                                    $("#address_line1").val(address_street + ", " + address_street2);
+                                } else if (address_component.types[0] == "postal_code") {
+                                    address_zip = address_component.long_name;
+                                } else if (address_component.types[0] == "locality") {
+                                    address_city = address_component.long_name;
+                                } else if (address_component.types[0] == "administrative_area_level_1") {
+                                    address_state = address_component.long_name;
+                                } else if (address_component.types[0] == "country") {
+                                    address_country = address_component.long_name;
+                                } else if (address_component.types[0] == "street_number") {
+                                    address_street = address_component.long_name;
+                                } else if (address_component.types[0] == "route") {
+                                    address_street2 = address_component.long_name;
+                                } else if (address_component.types[0] == "political") {
+                                    address_street3 = address_component.long_name;
                                 }
-                                $("#address_line2").val(address_street3);
-                                $("#address_city").val(address_city);
-                                $("#address_country").val(address_country);
-                                $("#address_zipcode").val(address_zip);
+                            });
+                            address_lat = results[0].geometry.location.lat();
+                            address_lng = results[0].geometry.location.lng();
+                            $("#address_lat").val(address_lat);
+                            $("#address_lng").val(address_lng);
+                            if (results[0].formatted_address) {
+                                $("#address_line1").val(results[0].formatted_address);
+                            } else {
+                                $("#address_line1").val(address_street + ", " + address_street2);
                             }
+                            $("#address_line2").val(address_street3);
+                            $("#address_city").val(address_city);
+                            $("#address_country").val(address_country);
+                            $("#address_zipcode").val(address_zip);
                         }
-                    });
-                    try {} catch (err) {}
-                },
-                function() {});
+                    }
+                });
+                try { } catch (err) { }
+            },
+                function () { });
         }
     }
     var email_templates = database.collection('email_templates').where('type', '==', 'new_order_placed');
@@ -851,7 +875,7 @@
     var currencyAtRight = false;
     var decimal_degits = 0;
     var refCurrency = database.collection('currencies').where('isActive', '==', true);
-    refCurrency.get().then(async function(snapshots) {
+    refCurrency.get().then(async function (snapshots) {
         var currencyData = snapshots.docs[0].data();
         currentCurrency = currencyData.symbol;
         currencyAtRight = currencyData.symbolAtRight;
@@ -860,7 +884,7 @@
         }
     });
     async function sendMailData(userEmail, userName, orderId, address, paymentMethod, products, couponCode, discount, specialDiscount, taxSetting, deliveryCharge, tipAmount) {
-        await email_templates.get().then(async function(snapshots) {
+        await email_templates.get().then(async function (snapshots) {
             emailTemplatesData = snapshots.docs[0].data();
         });
         var formattedDate = new Date();
@@ -911,7 +935,7 @@
                         }
                         extra_count++;
                     })
-                } catch (error) {}
+                } catch (error) { }
             }
             totalProductPrice = parseFloat(totalProductPrice).toFixed(decimal_degits);
             productDetailsHtml += '<td style="width: 20%; border-top: 1px solid rgb(0, 0, 0);">';
@@ -1052,7 +1076,7 @@
         return await sendEmail(url, emailTemplatesData.subject, emailTemplatesData.message, [userEmail]);
     }
     async function sendOnDemandMailData(userEmail, userName, orderId, address, paymentMethod, product, quantity, couponCode, discount, taxSetting) {
-        await email_templates_ondemand.get().then(async function(snapshots) {
+        await email_templates_ondemand.get().then(async function (snapshots) {
             emailTemplatesData = snapshots.docs[0].data();
         });
         var formattedDate = new Date();
@@ -1204,10 +1228,10 @@
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
-            success: function(data) {
+            success: function (data) {
                 checkFlag = true;
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 checkFlag = true;
             }
         });
@@ -1220,12 +1244,12 @@
         }
         var input = document.getElementById('address_line1');
         var autocomplete = new google.maps.places.Autocomplete(input);
-        google.maps.event.addListener(autocomplete, 'place_changed', function() {
+        google.maps.event.addListener(autocomplete, 'place_changed', function () {
             var place = autocomplete.getPlace();
             address_name = place.name;
             address_lat = place.geometry.location.lat();
             address_lng = place.geometry.location.lng();
-            $.each(place.address_components, function(i, address_component) {
+            $.each(place.address_components, function (i, address_component) {
                 address_name1 = '';
                 if (address_component.types[0] == "premise") {
                     if (address_name1 == '') {
@@ -1259,67 +1283,67 @@
         if (mapType == 'google') {
             var geocoder = new google.maps.Geocoder();
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(async function(position) {
-                        var pos = {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude
-                        };
-                        var geolocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-                        var circle = new google.maps.Circle({
-                            center: geolocation,
-                            radius: position.coords.accuracy
-                        });
-                        var location = new google.maps.LatLng(pos['lat'], pos['lng']);
-                        geocoder.geocode({
-                            'latLng': location
-                        }, async function(results, status) {
-                            if (status == google.maps.GeocoderStatus.OK) {
-                                if (results.length > 0) {
-                                    document.getElementById('user_locationnew').value = results[0].formatted_address;
+                navigator.geolocation.getCurrentPosition(async function (position) {
+                    var pos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    var geolocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                    var circle = new google.maps.Circle({
+                        center: geolocation,
+                        radius: position.coords.accuracy
+                    });
+                    var location = new google.maps.LatLng(pos['lat'], pos['lng']);
+                    geocoder.geocode({
+                        'latLng': location
+                    }, async function (results, status) {
+                        if (status == google.maps.GeocoderStatus.OK) {
+                            if (results.length > 0) {
+                                document.getElementById('user_locationnew').value = results[0].formatted_address;
+                                address_name1 = '';
+                                $.each(results[0].address_components, async function (i, address_component) {
                                     address_name1 = '';
-                                    $.each(results[0].address_components, async function(i, address_component) {
-                                        address_name1 = '';
-                                        if (address_component.types[0] == "premise") {
-                                            if (address_name1 == '') {
-                                                address_name1 = address_component.long_name;
-                                            } else {
-                                                address_name2 = address_component.long_name;
-                                            }
-                                        } else if (address_component.types[0] == "postal_code") {
-                                            address_zip = address_component.long_name;
-                                        } else if (address_component.types[0] == "locality") {
-                                            address_city = address_component.long_name;
-                                        } else if (address_component.types[0] == "administrative_area_level_1") {
-                                            var address_state = address_component.long_name;
-                                        } else if (address_component.types[0] == "country") {
-                                            var address_country = address_component.long_name;
+                                    if (address_component.types[0] == "premise") {
+                                        if (address_name1 == '') {
+                                            address_name1 = address_component.long_name;
+                                        } else {
+                                            address_name2 = address_component.long_name;
                                         }
-                                    });
-                                    address_name = results[0].formatted_address;
-                                    address_lat = results[0].geometry.location.lat();
-                                    address_lng = results[0].geometry.location.lng();
-                                    setCookie('address_name1', address_name1, 365);
-                                    setCookie('address_name2', address_name2, 365);
-                                    setCookie('address_name', address_name, 365);
-                                    setCookie('address_lat', address_lat, 365);
-                                    setCookie('address_lng', address_lng, 365);
-                                    setCookie('address_zip', address_zip, 365);
-                                    setCookie('address_city', address_city, 365);
-                                    setCookie('address_state', address_state, 365);
-                                    setCookie('address_country', address_country, 365);
-                                    if (type == 'reload') {
-                                        window.location.reload(true);
+                                    } else if (address_component.types[0] == "postal_code") {
+                                        address_zip = address_component.long_name;
+                                    } else if (address_component.types[0] == "locality") {
+                                        address_city = address_component.long_name;
+                                    } else if (address_component.types[0] == "administrative_area_level_1") {
+                                        var address_state = address_component.long_name;
+                                    } else if (address_component.types[0] == "country") {
+                                        var address_country = address_component.long_name;
                                     }
+                                });
+                                address_name = results[0].formatted_address;
+                                address_lat = results[0].geometry.location.lat();
+                                address_lng = results[0].geometry.location.lng();
+                                setCookie('address_name1', address_name1, 365);
+                                setCookie('address_name2', address_name2, 365);
+                                setCookie('address_name', address_name, 365);
+                                setCookie('address_lat', address_lat, 365);
+                                setCookie('address_lng', address_lng, 365);
+                                setCookie('address_zip', address_zip, 365);
+                                setCookie('address_city', address_city, 365);
+                                setCookie('address_state', address_state, 365);
+                                setCookie('address_country', address_country, 365);
+                                if (type == 'reload') {
+                                    window.location.reload(true);
                                 }
                             }
-                        });
-                        try {
-                            if (autocomplete) {
-                                autocomplete.setBounds(circle.getBounds());
-                            }
-                        } catch (err) {}
-                    },
-                    function() {});
+                        }
+                    });
+                    try {
+                        if (autocomplete) {
+                            autocomplete.setBounds(circle.getBounds());
+                        }
+                    } catch (err) { }
+                },
+                    function () { });
             } else {
                 // Browser doesn't support Geolocation
             }
@@ -1343,7 +1367,7 @@
         const lat1 = lat.toFixed(4);
         const lon1 = lon.toFixed(4);
         const url = 'https://nominatim.openstreetmap.org/reverse?lat=' + lat1 + '&lon=' + lon1 + '&format=json&addressdetails=1';
-        $.getJSON(url, function(data) {
+        $.getJSON(url, function (data) {
             if (data && data.address) {
                 const placeName = data.display_name;
                 $('#user_locationnew').val(placeName);
@@ -1375,7 +1399,7 @@
             } else {
                 console.error("Place not found.");
             }
-        }).fail(function() {
+        }).fail(function () {
             console.error("Error fetching data from Nominatim.");
         });
     }
@@ -1403,7 +1427,7 @@
         var postalCode = $("#address_zipcode").val();
         var full_address = '';
         if (cuser_id != "") {
-            userDetailsRef.get().then(async function(userSnapshots) {
+            userDetailsRef.get().then(async function (userSnapshots) {
                 var userDetails = userSnapshots.docs[0].data();
                 if (userDetails.hasOwnProperty('shippingAddress')) {
                     var shippingAddress = userDetails.shippingAddress;
@@ -1447,7 +1471,7 @@
                 setCookie('address_name', full_address, 365);
                 database.collection('users').doc(cuser_id).update({
                     'shippingAddress': shippingAddress
-                }).then(function(result) {
+                }).then(function (result) {
                     $('#close_button').trigger("click");
                     location.reload();
                 });
@@ -1505,22 +1529,22 @@
 </script>
 <script type="text/javascript">
     <?php
-    use App\Models\user;
-    use App\Models\VendorUsers;
-    $user_email = '';
-    $user_uuid = '';
-    $auth_id = Auth::id();
-    if ($auth_id) {
-        $user = user::select('email')->where('id', $auth_id)->first();
-        $user_email = $user->email;
-        $user_uuid = VendorUsers::select('uuid')->where('email', $user_email)->first();
-        $user_uuid = $user_uuid->uuid;
-    }
+use App\Models\user;
+use App\Models\VendorUsers;
+$user_email = '';
+$user_uuid = '';
+$auth_id = Auth::id();
+if ($auth_id) {
+    $user = user::select('email')->where('id', $auth_id)->first();
+    $user_email = $user->email;
+    $user_uuid = VendorUsers::select('uuid')->where('email', $user_email)->first();
+    $user_uuid = $user_uuid->uuid;
+}
     ?>
     var database = firebase.firestore();
     var placeholderImageHeader = '';
     var googleMapKeySettingHeader = database.collection('settings').doc("googleMapKey");
-    googleMapKeySettingHeader.get().then(async function(googleMapKeySnapshotsHeader) {
+    googleMapKeySettingHeader.get().then(async function (googleMapKeySnapshotsHeader) {
         var placeholderImageHeaderData = googleMapKeySnapshotsHeader.data();
         placeholderImageHeader = placeholderImageHeaderData.placeHolderImage;
     })
@@ -1533,15 +1557,15 @@
         referral_ref = database.collection('referral').doc(user_uuid);
     }
     var ref = database.collection('settings').doc("globalSettings");
-    ref.get().then(async function(snapshots) {
+    ref.get().then(async function (snapshots) {
         var globalSettings = snapshots.data();
         $("#logo_web").attr('src', globalSettings.appLogo);
         $("#footer_logo_web").attr('src', globalSettings.appLogo);
     });
-    $(document).ready(async function() {
+    $(document).ready(async function () {
         jQuery("#data-table_processing").show();
         if (user_ref != '') {
-            user_ref.get().then(async function(profileSnapshots) {
+            user_ref.get().then(async function (profileSnapshots) {
                 if (profileSnapshots.docs.length) {
                     var profile_user = profileSnapshots.docs[0].data();
                     var profile_name = profile_user.firstName + " " + profile_user.lastName;
@@ -1557,7 +1581,7 @@
             })
         }
         if (referral_ref) {
-            referral_ref.get().then(async function(refSnapshot) {
+            referral_ref.get().then(async function (refSnapshot) {
                 var referral_data = refSnapshot.data();
                 if (referral_data != undefined && referral_data.referralCode != null && referral_data.referralCode != undefined) {
                     $(".referral_code").html("<b>{{ trans('lang.your_referral_code') }} : " + referral_data.referralCode + "</b>");
@@ -1565,8 +1589,8 @@
             })
         }
     })
-    $(".user-logout-btn").click(async function() {
-        firebase.auth().signOut().then(function() {
+    $(".user-logout-btn").click(async function () {
+        firebase.auth().signOut().then(function () {
             var logoutURL = "{{ route('logout') }}";
             $.ajax({
                 type: 'POST',
@@ -1575,7 +1599,7 @@
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
-                success: function(data1) {
+                success: function (data1) {
                     if (data1.logoutuser) {
                         window.location = "{{ route('login') }}";
                     }
@@ -1583,8 +1607,8 @@
             })
         });
     });
-    $(document).ready(function() {
-        $(document).on("click", ".select_section", async function(e) {
+    $(document).ready(function () {
+        $(document).on("click", ".select_section", async function (e) {
             var section_id = $(this).attr('data-id');
             var section_name = $(this).attr('data-name');
             var section_color = $(this).attr('data-color');
@@ -1604,7 +1628,7 @@
                 await $.ajax({
                     url: 'check-cart-data',
                     type: 'GET',
-                    success: async function(result) {
+                    success: async function (result) {
                         if (result > 0) {
                             Swal.fire({
                                 text: "{{ trans('lang.section_change_alert') }}",
@@ -1619,7 +1643,7 @@
                                         },
                                         url: 'remove-cart-data',
                                         type: 'POST',
-                                        success: function(result) {
+                                        success: function (result) {
                                             setCookie('section_id', section_id, 365);
                                             setCookie('section_name', section_name, 365);
                                             setCookie('section_color', section_color, 365);
@@ -1652,10 +1676,10 @@
 
 <?php if (Auth::user()) { ?>
 <script type="text/javascript">
-    var route1 = '<?php echo route('my_order'); ?>';
-    var routeparcel = '<?php echo route('parcel_orders'); ?>';
-    var routerental = '<?php echo route('rental_orders'); ?>';
-    var routeondemand = '<?php echo route('my-bookings'); ?>';
+    var route1 = '<?php    echo route('my_order'); ?>';
+    var routeparcel = '<?php    echo route('parcel_orders'); ?>';
+    var routerental = '<?php    echo route('rental_orders'); ?>';
+    var routeondemand = '<?php    echo route('my-bookings'); ?>';
     var orderAcceptedSubject = '';
     var orderAcceptedMsg = '';
     var orderRejectedSubject = '';
@@ -1707,7 +1731,7 @@
     var bookingEndSubject = '';
     var bookingEnddMsg = '';
     var database = firebase.firestore();
-    database.collection('dynamic_notification').get().then(async function(snapshot) {
+    database.collection('dynamic_notification').get().then(async function (snapshot) {
         if (snapshot.docs.length > 0) {
             snapshot.docs.map(async (listval) => {
                 val = listval.data();
@@ -1791,9 +1815,9 @@
         }
     });
     var pageloadded = 0;
-    database.collection('vendor_orders').where('author.id', "==", cuser_id).onSnapshot(function(doc) {
+    database.collection('vendor_orders').where('author.id', "==", cuser_id).onSnapshot(function (doc) {
         if (pageloadded) {
-            doc.docChanges().forEach(function(change) {
+            doc.docChanges().forEach(function (change) {
                 val = change.doc.data();
                 if (change.type == "modified") {
                     if (val.status == "Order Completed" && val.takeAway == true || val.takeAway == 'true') {
@@ -1848,9 +1872,9 @@
         }
     });
     var ondemandPageLoadded = 0;
-    database.collection('provider_orders').where('author.id', "==", cuser_id).onSnapshot(function(doc) {
+    database.collection('provider_orders').where('author.id', "==", cuser_id).onSnapshot(function (doc) {
         if (ondemandPageLoadded) {
-            doc.docChanges().forEach(function(change) {
+            doc.docChanges().forEach(function (change) {
                 val = change.doc.data();
                 if (change.type == "modified") {
                     if (val.status == "Order Accepted") {
@@ -1908,9 +1932,9 @@
     });
     var parcel_page_loaded = 0;
     var addParcelReviewBtnClicked = false;
-    database.collection('parcel_orders').where('author.id', "==", cuser_id).onSnapshot(function(doc) {
+    database.collection('parcel_orders').where('author.id', "==", cuser_id).onSnapshot(function (doc) {
         if (parcel_page_loaded) {
-            doc.docChanges().forEach(function(change) {
+            doc.docChanges().forEach(function (change) {
                 val = change.doc.data();
                 if (change.type == "modified") {
                     if (val.status == "Order Completed" && addParcelReviewBtnClicked == false) {
@@ -1937,9 +1961,9 @@
     });
     var rental_page_loaded = 0;
     var addRentalReviewBtnClicked = false;
-    database.collection('rental_orders').where('author.id', "==", cuser_id).onSnapshot(function(doc) {
+    database.collection('rental_orders').where('author.id', "==", cuser_id).onSnapshot(function (doc) {
         if (rental_page_loaded) {
-            doc.docChanges().forEach(function(change) {
+            doc.docChanges().forEach(function (change) {
                 val = change.doc.data();
                 if (change.type == "modified") {
                     if (val.status == "Order Completed" && addRentalReviewBtnClicked == false) {
@@ -1970,9 +1994,9 @@
         }
     });
     var pageloadded_dining = 0;
-    database.collection('booked_table').where('author.id', "==", cuser_id).onSnapshot(function(doc) {
+    database.collection('booked_table').where('author.id', "==", cuser_id).onSnapshot(function (doc) {
         if (pageloadded_dining) {
-            doc.docChanges().forEach(function(change) {
+            doc.docChanges().forEach(function (change) {
                 val = change.doc.data();
                 if (change.type == "modified") {
                     if (val.status == "Order Accepted") {
@@ -1993,7 +2017,7 @@
     async function getDriver(driverData) {
         var rideDetails = '';
         var client_name = '';
-        await database.collection('users').where("id", "==", driverData).get().then(async function(snapshotss) {
+        await database.collection('users').where("id", "==", driverData).get().then(async function (snapshotss) {
             if (snapshotss.docs[0]) {
                 var ride_data = snapshotss.docs[0].data();
                 client_name = ride_data.firstName;
@@ -2010,7 +2034,7 @@
         var rideDetails = '';
         var client_name = '';
         $('.driver_name_').empty('');
-        await database.collection('users').where("id", "==", driverData).get().then(async function(snapshotss) {
+        await database.collection('users').where("id", "==", driverData).get().then(async function (snapshotss) {
             if (snapshotss.docs[0]) {
                 var ride_data = snapshotss.docs[0].data();
                 client_name = ride_data.firstName;
@@ -2029,7 +2053,7 @@
     var langcount = 0;
     var languages_list_main = [];
     var languages_list = database.collection('settings').doc('languages');
-    languages_list.get().then(async function(snapshotslang) {
+    languages_list.get().then(async function (snapshotslang) {
         snapshotslang = snapshotslang.data();
         if (snapshotslang != undefined) {
             snapshotslang = snapshotslang.list;
@@ -2045,13 +2069,13 @@
                 $("#language_dropdown_box").css('visibility', 'visible');
             }
             <?php if (session()->get('locale')) { ?>
-            $("#language_dropdown").val("<?php echo session()->get('locale'); ?>");
-            $("#language_dropdown2").val("<?php echo session()->get('locale'); ?>");
+            $("#language_dropdown").val("<?php    echo session()->get('locale'); ?>");
+            $("#language_dropdown2").val("<?php    echo session()->get('locale'); ?>");
             <?php } ?>
         }
     });
     var url = "{{ route('changeLang') }}";
-    $(".changeLang").change(function() {
+    $(".changeLang").change(function () {
         var slug = $(this).val();
         languages_list_main.forEach((data) => {
             if (slug == data.slug) {
@@ -2064,7 +2088,7 @@
             }
         });
     });
-    $(document).ready(function() {
+    $(document).ready(function () {
         var $main_nav = $('#main-nav');
         var $toggle = $('.toggle');
         var defaultOptions = {
@@ -2079,7 +2103,7 @@
         };
         var Nav = $main_nav.hcOffcanvasNav(defaultOptions);
     });
-    database.collection('settings').doc("notification_setting").get().then(async function(snapshots) {
+    database.collection('settings').doc("notification_setting").get().then(async function (snapshots) {
         var data = snapshots.data();
         serviceJson = data.serviceJson;
         if (serviceJson != '' && serviceJson != null) {
@@ -2092,7 +2116,7 @@
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
-                success: function(data) {
+                success: function (data) {
                     checkFlag = true;
                 }
             });
@@ -2101,7 +2125,7 @@
     //start - Get user zone id from address
     getUserZoneId();
     var user_zone_id = null;
-    async function getUserZoneId(latitude='',longitude='') {
+    async function getUserZoneId(latitude = '', longitude = '') {
         const snapshots = await database.collection('zone').where("publish", "==", true).get();
         for (const snapshot of snapshots.docs) {
             const zone = snapshot.data();
@@ -2111,7 +2135,7 @@
                 vertices_x.push(point.longitude);
                 vertices_y.push(point.latitude);
             }
-            if(latitude && longitude){
+            if (latitude && longitude) {
                 address_lat = latitude;
                 address_lng = longitude;
             }
@@ -2139,13 +2163,24 @@
     }
     //end - Get user zone id from address
     //start - Get product price with admin commission globally
-    database.collection('sections').doc(getCookie('section_id')).get().then(async function(snapshots) {
+    database.collection('sections').doc(getCookie('section_id')).get().then(async function (snapshots) {
         var adminCommissionSettings = snapshots.data();
         localStorage.setItem('adminCommissionSettings', JSON.stringify(adminCommissionSettings.adminCommision));
     });
+    function roundPrice(price) {
+        var num = parseFloat(price);
+        if (isNaN(num)) return 0;
+        var remainder = num % 1000;
+        if (remainder >= 500) {
+            return Math.ceil(num / 1000) * 1000;
+        } else {
+            return Math.floor(num / 1000) * 1000;
+        }
+    }
+
     function getFormattedPrice(price) {
         if (price != null && price !== "") {
-            let final_price = price;
+            let final_price = roundPrice(price);
             // Format the final price based on the currency settings
             let formatted_price = currencyAtRight ?
                 final_price.toFixed(decimal_degits) + "" + currentCurrency :
@@ -2204,26 +2239,26 @@
             price = parseFloat(productData.price);
         }
         final_price = {
-            price: price
+            price: roundPrice(price)
         };
         // Check for discount price (disPrice)
         if (productData.disPrice && productData.disPrice !== '0' && productData.disPrice !== "") {
             if (commissionData && adminCommissionSettings.enable) {
                 if (commissionData.type === "percentage") {
                     dis_price = parseFloat(productData.disPrice) + (parseFloat(productData.disPrice) * parseFloat(
-                            commissionData.commission) /
+                        commissionData.commission) /
                         100);
                 } else {
                     dis_price = parseFloat(productData.disPrice) + parseFloat(commissionData.commission);
                 }
                 final_price = {
-                    price: price,
-                    dis_price: dis_price
+                    price: roundPrice(price),
+                    dis_price: roundPrice(dis_price)
                 };
             } else {
                 final_price = {
-                    price: parseFloat(productData.price),
-                    dis_price: parseFloat(productData.disPrice)
+                    price: roundPrice(productData.price),
+                    dis_price: roundPrice(productData.disPrice)
                 };
             }
         }
@@ -2247,27 +2282,27 @@
             // If variants have a range, use that
             if (minPrice !== maxPrice) {
                 final_price = {
-                    min: minPrice,
-                    max: maxPrice,
+                    min: roundPrice(minPrice),
+                    max: roundPrice(maxPrice),
                     variants: Object.fromEntries(variantPrices.map(v => [
                         v.variant_id,
-                        commissionData && adminCommissionSettings.enable ?
-                        (commissionData.type === "percentage" ?
-                            parseFloat(v.variant_price) + (parseFloat(v.variant_price) * parseFloat(commissionData.commission) / 100) :
-                            parseFloat(v.variant_price) + parseFloat(commissionData.commission)) :
-                        parseFloat(v.variant_price)
+                        roundPrice(commissionData && adminCommissionSettings.enable ?
+                            (commissionData.type === "percentage" ?
+                                parseFloat(v.variant_price) + (parseFloat(v.variant_price) * parseFloat(commissionData.commission) / 100) :
+                                parseFloat(v.variant_price) + parseFloat(commissionData.commission)) :
+                            parseFloat(v.variant_price))
                     ]))
                 };
             } else {
                 final_price = {
-                    max: minPrice,
+                    max: roundPrice(minPrice),
                     variants: Object.fromEntries(variantPrices.map(v => [
                         v.variant_id,
-                        commissionData && adminCommissionSettings.enable ?
-                        (commissionData.type === "percentage" ?
-                            parseFloat(v.variant_price) + (parseFloat(v.variant_price) * parseFloat(commissionData.commission) / 100) :
-                            parseFloat(v.variant_price) + parseFloat(commissionData.commission)) :
-                        parseFloat(v.variant_price)
+                        roundPrice(commissionData && adminCommissionSettings.enable ?
+                            (commissionData.type === "percentage" ?
+                                parseFloat(v.variant_price) + (parseFloat(v.variant_price) * parseFloat(commissionData.commission) / 100) :
+                                parseFloat(v.variant_price) + parseFloat(commissionData.commission)) :
+                            parseFloat(v.variant_price))
                     ]))
                 };
             }
@@ -2279,10 +2314,11 @@
     }
     function getProductFormattedPrice(price) {
         if (price != null && price != '' && price != undefined) {
+            var num = roundPrice(price);
             if (currencyAtRight) {
-                return price.toFixed(decimal_degits) + "" + currentCurrency;
+                return num.toFixed(decimal_degits) + "" + currentCurrency;
             } else {
-                return currentCurrency + "" + price.toFixed(decimal_degits);
+                return currentCurrency + "" + num.toFixed(decimal_degits);
             }
         } else {
             return currentCurrency + "" + 0;
@@ -2299,15 +2335,15 @@
             let mid;
             if (isEven) {
                 mid = (lonRange[0] + lonRange[1]) / 2;
-                if (longitude > mid) { ch |= (1 << (4 - bit)); lonRange[0] = mid; } 
+                if (longitude > mid) { ch |= (1 << (4 - bit)); lonRange[0] = mid; }
                 else { lonRange[1] = mid; }
             } else {
                 mid = (latRange[0] + latRange[1]) / 2;
-                if (latitude > mid) { ch |= (1 << (4 - bit)); latRange[0] = mid; } 
+                if (latitude > mid) { ch |= (1 << (4 - bit)); latRange[0] = mid; }
                 else { latRange[1] = mid; }
             }
             isEven = !isEven;
-            if (bit < 4) { bit++; } 
+            if (bit < 4) { bit++; }
             else { geohash += BASE32[ch]; bit = 0; ch = 0; }
         }
         return geohash;

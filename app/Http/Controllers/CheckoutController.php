@@ -27,11 +27,11 @@ use Xendit\Invoice\CreateInvoiceRequest;
 use Xendit\XenditSdkException;
 
 use GuzzleHttp\Client;
+use App\Helpers\PriceHelper;
 
 
 
 class CheckoutController extends Controller
-
 {
 
     /**
@@ -45,7 +45,6 @@ class CheckoutController extends Controller
      */
 
     public function __construct()
-
     {
 
         if (!isset($_COOKIE['section_id']) && !isset($_COOKIE['address_name'])) {
@@ -71,7 +70,6 @@ class CheckoutController extends Controller
      */
 
     public function checkout()
-
     {
 
         $email = Auth::user()->email;
@@ -107,7 +105,7 @@ class CheckoutController extends Controller
                     $deliveryChargemain = json_decode($deliveryChargemain);
 
                     if (!empty($deliveryChargemain)) {
-                        if (! empty($cart['distanceType'])) {
+                        if (!empty($cart['distanceType'])) {
                             $distanceType = $cart['distanceType'];
                         } else {
                             $distanceType = 'Km';
@@ -126,7 +124,7 @@ class CheckoutController extends Controller
 
                         } else {
 
-                            $cart['deliverychargemain'] = round(($kmradius * $delivery_charges_per_km), 2);
+                            $cart['deliverychargemain'] = PriceHelper::roundToNearestThousand($kmradius * $delivery_charges_per_km);
 
                         }
 
@@ -138,7 +136,7 @@ class CheckoutController extends Controller
 
             }
 
-           
+
             if (@$cart['isSelfDelivery'] === true || @$cart['isSelfDelivery'] === "true") {
                 $cart['deliverycharge'] = 0;
             } else {
@@ -168,7 +166,6 @@ class CheckoutController extends Controller
      */
 
     public function distance($lat1, $lon1, $lat2, $lon2, $unit)
-
     {
 
         $theta = $lon1 - $lon2;
@@ -187,7 +184,7 @@ class CheckoutController extends Controller
 
             return ($miles * 1.609344);
 
-        }  else {
+        } else {
 
             return $miles;
 
@@ -208,7 +205,6 @@ class CheckoutController extends Controller
      */
 
     public function proccesstopay()
-
     {
 
         $email = Auth::user()->email;
@@ -233,11 +229,11 @@ class CheckoutController extends Controller
 
                 return view('checkout.razorpay', ['is_checkout' => 1, 'cart' => $cart, 'id' => $user->uuid, 'email' => $email, 'authorName' => $authorName, 'amount' => $total_pay, 'razorpaySecret' => $razorpaySecret, 'razorpayKey' => $razorpayKey, 'cart_order' => $cart['cart_order']]);
 
-            }else if($cart['cart_order']['payment_method']=='xendit'){
+            } else if ($cart['cart_order']['payment_method'] == 'xendit') {
 
-                $xendit_enable=$cart['cart_order']['xendit_enable'];
+                $xendit_enable = $cart['cart_order']['xendit_enable'];
 
-                $xendit_apiKey=$cart['cart_order']['xendit_apiKey'];
+                $xendit_apiKey = $cart['cart_order']['xendit_apiKey'];
 
                 if (isset($xendit_enable) && $xendit_enable == true) {
 
@@ -266,9 +262,9 @@ class CheckoutController extends Controller
 
                         'external_id' => $token,
 
-                        'description' => '#'.$token.' Order place',
+                        'description' => '#' . $token . ' Order place',
 
-                        'amount' => (int)($total_pay)*1000,
+                        'amount' => (int) ($total_pay) * 1000,
 
                         'invoice_duration' => 300,
 
@@ -282,7 +278,7 @@ class CheckoutController extends Controller
 
 
                     try {
-// dd($create_invoice_request);
+                        // dd($create_invoice_request);
                         $result = $apiInstance->createInvoice($create_invoice_request);
 
                         return redirect($result['invoice_url']);
@@ -301,7 +297,7 @@ class CheckoutController extends Controller
 
                 }
 
-            } else if($cart['cart_order']['payment_method']=='midtrans'){
+            } else if ($cart['cart_order']['payment_method'] == 'midtrans') {
 
                 $midtrans_enable = $cart['cart_order']['midtrans_enable'];
 
@@ -314,7 +310,6 @@ class CheckoutController extends Controller
                     if ($midtrans_isSandbox == true)
 
                         $url = 'https://api.sandbox.midtrans.com/v1/payment-links';
-
                     else
 
                         $url = 'https://api.midtrans.com/v1/payment-links';
@@ -343,19 +338,19 @@ class CheckoutController extends Controller
 
                             'order_id' => $token,
 
-                            'gross_amount' => (int)($total_pay)*1000,
+                            'gross_amount' => (int) ($total_pay) * 1000,
 
                         ],
 
                         'usage_limit' => 1,
 
-                        'callbacks'=> [
+                        'callbacks' => [
 
-                            'error'=> $fail_url,
+                            'error' => $fail_url,
 
-                            'unfinish'=> $fail_url,
+                            'unfinish' => $fail_url,
 
-                            'close'=> $fail_url,
+                            'close' => $fail_url,
 
                             'finish' => $success_url,
 
@@ -403,7 +398,7 @@ class CheckoutController extends Controller
 
                 }
 
-            } else if($cart['cart_order']['payment_method']=='orangepay'){
+            } else if ($cart['cart_order']['payment_method'] == 'orangepay') {
 
                 $orangepay_enable = $cart['cart_order']['orangepay_enable'];
 
@@ -419,7 +414,7 @@ class CheckoutController extends Controller
 
                 $orangepay_merchantKey = $cart['cart_order']['orangepay_merchantKey'];
 
-                $token = $this->getAccessToken($orangepay_clientId,$orangepay_clientSecret);
+                $token = $this->getAccessToken($orangepay_clientId, $orangepay_clientSecret);
 
                 Session::put('orangepay_access_token', $token);
 
@@ -432,7 +427,6 @@ class CheckoutController extends Controller
                     if ($orangepay_isSandbox == true)
 
                         $url = 'https://api.orange.com/orange-money-webpay/dev/v1/webpayment';
-
                     else
 
                         $url = 'https://api.orange.com/orange-money-webpay/cm/v1/webpayment';
@@ -465,7 +459,7 @@ class CheckoutController extends Controller
 
                         'order_id' => $orangepay_token,
 
-                        'amount' => (int)($total_pay),
+                        'amount' => (int) ($total_pay),
 
                         'return_url' => $success_url,
 
@@ -573,7 +567,7 @@ class CheckoutController extends Controller
 
                     'email' => $email,
 
-                    'amount' => (int)($total_pay * 100),
+                    'amount' => (int) ($total_pay * 100),
 
                     'callback_url' => route('success')
 
@@ -822,7 +816,6 @@ class CheckoutController extends Controller
      */
 
     public function processStripePayment(Request $request)
-
     {
 
         $email = Auth::user()->email;
@@ -916,7 +909,6 @@ class CheckoutController extends Controller
 
 
     public function processMercadoPagoPayment(Request $request)
-
     {
 
         $email = Auth::user()->email;
@@ -964,7 +956,6 @@ class CheckoutController extends Controller
      */
 
     public function processPaypalPayment(Request $request)
-
     {
 
         $email = Auth::user()->email;
@@ -1024,7 +1015,6 @@ class CheckoutController extends Controller
      */
 
     public function razorpaypayment(Request $request)
-
     {
 
         $input = $request->all();
@@ -1076,7 +1066,6 @@ class CheckoutController extends Controller
 
 
     private function getAccessToken($clientId, $clientSecret)
-
     {
 
         $authUrl = 'https://api.orange.com/oauth/v3/token';
@@ -1136,7 +1125,6 @@ class CheckoutController extends Controller
      */
 
     public function success()
-
     {
 
         $cart = Session::get('cart', []);
@@ -1366,7 +1354,6 @@ class CheckoutController extends Controller
      */
 
     public function orderProccessing(Request $request)
-
     {
 
         $cart_order = $request->all();
@@ -1394,14 +1381,13 @@ class CheckoutController extends Controller
 
 
     public function proccesspaystack(Request $request)
-
     {
 
         $cart = Session::get('cart', []);
 
-        $paystack_public_key=$cart['cart_order']['paystack_public_key'];
+        $paystack_public_key = $cart['cart_order']['paystack_public_key'];
 
-        $paystack_secret_key=$cart['cart_order']['paystack_secret_key'];
+        $paystack_secret_key = $cart['cart_order']['paystack_secret_key'];
 
         \Paystack\Paystack::init($paystack_secret_key);
 
@@ -1432,7 +1418,6 @@ class CheckoutController extends Controller
      */
 
     public function failed()
-
     {
 
         echo "failed payment";

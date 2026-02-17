@@ -9,6 +9,7 @@ use Razorpay\Api\Api;
 use Session;
 use Illuminate\Support\Facades\Storage;
 use Google\Client as Google_Client;
+use App\Helpers\PriceHelper;
 
 class OnDemandController extends Controller
 {
@@ -57,7 +58,7 @@ class OnDemandController extends Controller
         $ondemand_cart['quantity'] = $req['quantity'];
         $ondemand_cart['serviceCategoryId'] = $req['category_id'];
         $ondemand_cart['price'] = $req['price'];
-        $ondemand_cart['total_price'] = floatval($req['price']) * floatval($req['quantity']);
+        $ondemand_cart['total_price'] = PriceHelper::roundToNearestThousand(floatval($req['price']) * floatval($req['quantity']));
         $ondemand_cart['dis_price'] = $req['dis_price'];
         $ondemand_cart['image'] = $req['image'];
         $ondemand_cart['decimal_degits'] = $req['decimal_degits'];
@@ -108,7 +109,7 @@ class OnDemandController extends Controller
                 session()->forget('ondemand_cart');
             } else {
                 $ondemand_cart['quantity'] = $req['quantity'];
-                $ondemand_cart['total_price'] = $ondemand_cart['price'] * $ondemand_cart['quantity'];
+                $ondemand_cart['total_price'] = PriceHelper::roundToNearestThousand($ondemand_cart['price'] * $ondemand_cart['quantity']);
                 Session::put('ondemand_cart', $ondemand_cart);
             }
         }
@@ -154,9 +155,9 @@ class OnDemandController extends Controller
     public function sendnotification(Request $request)
     {
 
-        if(Storage::disk('local')->has('firebase/credentials.json')){
-            
-            $client= new Google_Client();
+        if (Storage::disk('local')->has('firebase/credentials.json')) {
+
+            $client = new Google_Client();
             $client->setAuthConfig(storage_path('app/firebase/credentials.json'));
             $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
             $client->refreshTokenWithAssertion();
@@ -164,11 +165,11 @@ class OnDemandController extends Controller
             $access_token = $client_token['access_token'];
 
             $fcm_token = $request->fcm;
-            
-            if(!empty($access_token) && !empty($fcm_token)){
+
+            if (!empty($access_token) && !empty($fcm_token)) {
 
                 $projectId = env('FIREBASE_PROJECT_ID');
-                $url = 'https://fcm.googleapis.com/v1/projects/'.$projectId.'/messages:send';
+                $url = 'https://fcm.googleapis.com/v1/projects/' . $projectId . '/messages:send';
 
                 $data = [
                     'message' => [
@@ -187,7 +188,7 @@ class OnDemandController extends Controller
 
                 $headers = array(
                     'Content-Type: application/json',
-                    'Authorization: Bearer '.$access_token
+                    'Authorization: Bearer ' . $access_token
                 );
 
                 $ch = curl_init();
@@ -198,31 +199,31 @@ class OnDemandController extends Controller
                 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-                
+
                 $result = curl_exec($ch);
                 if ($result === FALSE) {
                     die('FCM Send Error: ' . curl_error($ch));
                 }
                 curl_close($ch);
-                $result=json_decode($result);
+                $result = json_decode($result);
 
                 $response = array();
                 $response['success'] = true;
                 $response['message'] = 'Notification successfully sent.';
                 $response['result'] = $result;
 
-            }else{
+            } else {
                 $response = array();
                 $response['success'] = false;
                 $response['message'] = 'Missing sender id or token to send notification.';
             }
 
-        }else{
+        } else {
             $response = array();
             $response['success'] = false;
             $response['message'] = 'Firebase credentials file not found.';
         }
-       
+
         return response()->json($response);
     }
 
