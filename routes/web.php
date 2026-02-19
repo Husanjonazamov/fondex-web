@@ -29,6 +29,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TrendingController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\PayLaterServiceChargeController;
+use App\Http\Controllers\Payment_Methods\PaymeController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -203,12 +204,16 @@ Route::post('service-charge-stripe', [PayLaterServiceChargeController::class, 'p
 Route::post('service-charge-paypal', [PayLaterServiceChargeController::class, 'processPaypalPayment'])->name('service-charge-paypal');
 Route::post('store-firebase-service', [HomeController::class, 'storeServiceFile'])->name('storeServiceFile');
 
-Route::get('pay-wallet', [App\Http\Controllers\TransactionController::class, 'proccesstopaywallet'])->name('pay-wallet');
-Route::post('wallet-proccessing', [App\Http\Controllers\TransactionController::class, 'walletProccessing'])->name('wallet-proccessing');
-Route::post('wallet-process-stripe', [App\Http\Controllers\TransactionController::class, 'processStripePayment'])->name('wallet-process-stripe');
-Route::post('wallet-process-paypal', [App\Http\Controllers\TransactionController::class, 'processPaypalPayment'])->name('wallet-process-paypal');
-Route::post('razorpaywalletpayment', [App\Http\Controllers\TransactionController::class, 'razorpaypayment'])->name('razorpaywalletpayment');
-Route::post('wallet-process-mercadopago', [App\Http\Controllers\TransactionController::class, 'processMercadoPagoPayment'])->name('wallet-process-mercadopago');
-Route::get('wallet-success', [App\Http\Controllers\TransactionController::class, 'success'])->name('wallet-success');
-Route::get('wallet-notify', [App\Http\Controllers\TransactionController::class, 'notify'])->name('wallet-notify');
+Route::get('pay-wallet', [TransactionController::class, 'proccesstopaywallet'])->name('pay-wallet');
+Route::post('wallet-proccessing', [TransactionController::class, 'walletProccessing'])->name('wallet-proccessing');
+Route::post('wallet-process-stripe', [TransactionController::class, 'processStripePayment'])->name('wallet-process-stripe');
+Route::post('wallet-process-paypal', [TransactionController::class, 'processPaypalPayment'])->name('wallet-process-paypal');
+Route::post('razorpaywalletpayment', [TransactionController::class, 'razorpaypayment'])->name('razorpaywalletpayment');
+Route::post('wallet-process-mercadopago', [TransactionController::class, 'processMercadoPagoPayment'])->name('wallet-process-mercadopago');
+Route::get('wallet-success', [TransactionController::class, 'success'])->name('wallet-success');
+Route::get('wallet-notify', [TransactionController::class, 'notify'])->name('wallet-notify');
+Route::post('wallet-process-payme', [PaymeController::class, 'pay'])->name('wallet-process-payme');
+Route::get('wallet-payme-success', [TransactionController::class, 'paymeSuccess'])->name('wallet-payme-success');
 
+Route::post('/wallet-payme-link', [TransactionController::class, 'walletProcessPaymeLink'])
+    ->name('wallet-payme-link');
