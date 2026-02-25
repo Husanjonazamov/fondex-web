@@ -165,7 +165,7 @@ class AjaxController extends Controller
         // Agar phone bo'lsa OTP yuborish
         if (preg_match('/^\+998\d{9}$/', $emailOrPhone)) {
             $cleanPhone = str_replace('+', '', $emailOrPhone);
-            $testNumbers = ['998940014741', '998943015415', '998943015498', '998943015458'];
+            $testNumbers = ['998985666666', '998943015415', '998943015498', '998943015458'];
             $otp = in_array($cleanPhone, $testNumbers) ? 111111 : rand(100000, 999999);
             $user->verification_code = $otp;
             $user->verification_code_at = now();
@@ -204,7 +204,7 @@ class AjaxController extends Controller
     {
         $request->validate([
             'email' => 'required',        // email yoki phone
-            'otp' => (str_replace('+', '', $request->email) == '998940014741') ? 'required' : 'required|digits:6',
+            'otp' => (str_replace('+', '', $request->email) == '998985666666') ? 'required' : 'required|digits:6',
         ]);
 
         $emailOrPhone = $request->email;
