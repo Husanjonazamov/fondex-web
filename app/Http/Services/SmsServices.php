@@ -39,7 +39,7 @@ class SmsServices
     {
         // Static OTP for specific phone numbers
         $cleanTo = str_replace('+', '', $to);
-        if ($cleanTo == '998943015415' || $cleanTo == '998943015498' || $cleanTo == '998943015458' || $cleanTo == '998985666666') {
+        if ($cleanTo == '998943015415' || $cleanTo == '998943015498' || $cleanTo == '998943015458' || $cleanTo == '998985666666' || $cleanTo == '998999999999') {
             $code = '111111';
         }
 
