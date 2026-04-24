@@ -18,6 +18,7 @@ class LangController extends Controller
     {
         App::setLocale($request->lang);
         session()->put('locale', $request->lang);
+        \Cookie::queue('locale', $request->lang, 60 * 24 * 365); // 1 year
         return redirect()->back();
     }
 }

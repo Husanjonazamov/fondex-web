@@ -116,7 +116,12 @@ if (@$cart['item']) {
             <p class="text-gray mb-0 float-right ml-3 text-muted small">
                 <span class="currency-symbol-left"></span>
                 <span class="cart_iteam_total_<?php            echo $key1; ?>">
-                    <?php            $totalItemPrice = @floatval($value_item['price']) + @floatval($value_item['extra_price']) * @floatval($value_item['quantity']);
+                    <?php
+            $itemPrice = $value_item['price'];
+            if (isset($value_item['dis_price']) && floatval($value_item['dis_price']) > 0 && floatval($value_item['dis_price']) < floatval($value_item['price'])) {
+                $itemPrice = $value_item['dis_price'];
+            }
+            $totalItemPrice = (floatval($itemPrice) + floatval($value_item['extra_price'])) * floatval($value_item['quantity']);
             $digit_decimal = 0;
             if (@$cart['decimal_degits']) {
                 $digit_decimal = $cart['decimal_degits'];
@@ -130,7 +135,12 @@ if (@$cart['item']) {
         <div class="close remove_item col-md-1" data-vendor="<?php            echo $key; ?>" data-id="<?php            echo $key1; ?>"><i
                 class="fa fa-times"></i></div>
     </div>
-    <?php            $total_price = $total_price + (floatval($value_item['price']) + (@floatval($value_item['extra_price']) * @floatval($value_item['quantity'])));
+    <?php
+            $itemPrice = $value_item['price'];
+            if (isset($value_item['dis_price']) && floatval($value_item['dis_price']) > 0 && floatval($value_item['dis_price']) < floatval($value_item['price'])) {
+                $itemPrice = $value_item['dis_price'];
+            }
+            $total_price = $total_price + ((floatval($itemPrice) + floatval($value_item['extra_price'])) * floatval($value_item['quantity']));
         } ?>
     <?php    } ?>
     <?php    $total_item_price = $total_price; ?>

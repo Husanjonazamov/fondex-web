@@ -626,13 +626,34 @@ class TransactionController extends Controller
 
         // Telefon raqam orqali foydalanuvchini topamiz
         $phone = $request->phone;
-        $user = \App\Models\User::where('email', $phone)->first();
 
+        // +998... yoki 998... formatini normallashtirish
+        $phoneWithPlus = str_starts_with($phone, '+') ? $phone : '+' . $phone;
+        $phoneWithoutPlus = ltrim($phone, '+');
+
+        $user = \App\Models\User::where('email', $phoneWithPlus)
+            ->orWhere('email', $phoneWithoutPlus)
+            ->first();
+
+        // vendor_users jadvaldan ham qidiramiz
         if (!$user) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Foydalanuvchi topilmadi'
-            ], 404);
+            $vendorUser = \App\Models\VendorUsers::where('email', $phoneWithPlus)
+                ->orWhere('email', $phoneWithoutPlus)
+                ->first();
+
+            if ($vendorUser) {
+                $user = \App\Models\User::find($vendorUser->user_id);
+            }
+        }
+
+        // Hali ham topilmasa, avtomatik yaratamiz
+        if (!$user) {
+            $user = \App\Models\User::create([
+                'name'     => $phoneWithPlus,
+                'email'    => $phoneWithPlus,
+                'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(16)),
+                'role'     => 'user',
+            ]);
         }
 
         $order = new \JscorpTech\Payme\Models\Order();
