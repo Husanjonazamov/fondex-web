@@ -43,16 +43,19 @@ class SmsServices
             $code = '111111';
         }
 
+        // OTP'ni SMS yuborishdan OLDIN logga yozamiz — agar SMS hang bo'lsa ham ko'rinsin
+        Log::info('OTP generated', ['phone' => $to, 'otp' => $code]);
+
         $sms = "Fondex.uz mobil ilovasi uchun tasdiqlash kodi/ Код подтверждения: $code";
         $service = new SendService();
 
         try {
             $service->sendSms($to, $sms);
-            Log::info('OTP sent successfully', ['phone' => $to, 'otp' => $code]);
+            Log::info('OTP SMS sent successfully', ['phone' => $to, 'otp' => $code]);
         } catch (\Exception $e) {
-            Log::error('OTP sending failed', [
+            Log::error('OTP SMS failed (OTP still valid)', [
                 'phone' => $to,
-                'otp' => $code,
+                'otp'   => $code,
                 'error' => $e->getMessage()
             ]);
         }

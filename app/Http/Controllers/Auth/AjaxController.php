@@ -171,12 +171,18 @@ class AjaxController extends Controller
             $user->verification_code_at = now();
             $user->save();
 
+            // SMS yuborishdan OLDIN logga yozamiz — gateway ishlamasa ham OTP ko'rinsin
+            \Log::info('OTP created (register/login)', [
+                'phone' => $emailOrPhone,
+                'otp'   => $otp,
+            ]);
+
             try {
                 (new \App\Http\Services\SmsServices())->phoneVerificationSms($emailOrPhone, $otp);
             } catch (\Exception $e) {
-                \Log::error('Failed to send OTP on register', [
+                \Log::error('SMS yuborishda xato (OTP hali amal qiladi)', [
                     'phone' => $emailOrPhone,
-                    'otp' => $otp,
+                    'otp'   => $otp,
                     'error' => $e->getMessage()
                 ]);
             }

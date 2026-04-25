@@ -55,7 +55,7 @@ class SendService
         ];
 
         try {
-            $client = new Client(['base_uri' => $this->api_url]);
+            $client = new Client(['base_uri' => $this->api_url, 'timeout' => 5, 'connect_timeout' => 3]);
             $response = $client->request($method, $api_path, $req_data);
 
             if ($api_path == $this->methods['auth_refresh']) {
