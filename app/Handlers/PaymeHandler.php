@@ -2,6 +2,7 @@
 
 namespace App\Handlers;
 
+use App\Events\PaymentSucceeded;
 use App\Models\PaymentRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
@@ -46,37 +47,33 @@ class PaymeHandler
                 'new_state' => $order->state
             ]);
 
-            // Payment request ni topish va yangilash
-            $paymentRequest = PaymentRequest::where('order_id', $order->id)->first();
-            
-            if ($paymentRequest) {
-                $paymentRequest->is_paid = 1;
-                $paymentRequest->payment_method = 'payme';
-                $paymentRequest->save();
-
-                // Foydalanuvchi balansini to'ldirish (wallet uchun)
-                if ($order->type === 'wallet' && isset($order->user_id)) {
-                    $user = User::find($order->user_id);
-                    if ($user) {
-                        // Amount tiyin formatida, so'mga o'tkazish
-                        $amountInSum = $order->amount / 100;
-                        
-                        // Balansni yangilash
-                        $user->wallet_balance = ($user->wallet_balance ?? 0) + $amountInSum;
-                        $user->save();
-
-                        Log::info('Payme Wallet Balance Updated', [
-                            'user_id' => $user->id,
-                            'amount' => $amountInSum,
-                            'new_balance' => $user->wallet_balance
-                        ]);
-                    }
+            // Payment request ni topish va yangilash (bo'lsa, xato bo'lsa o'tkazib yuboramiz)
+            try {
+                $paymentRequest = PaymentRequest::where('order_id', $order->id)->first();
+                if ($paymentRequest) {
+                    $paymentRequest->is_paid = 1;
+                    $paymentRequest->payment_method = 'payme';
+                    $paymentRequest->save();
+                    Log::info('Payme Payment Request Updated', ['payment_request_id' => $paymentRequest->id]);
                 }
+            } catch (\Exception $prEx) {
+                Log::warning('Payme Handler: PaymentRequest skip', ['reason' => $prEx->getMessage()]);
+            }
 
-                Log::info('Payme Payment Request Updated', [
-                    'payment_request_id' => $paymentRequest->id,
-                    'user_id' => $paymentRequest->user_id ?? null
-                ]);
+            // MySQL wallet_balance yangilash (PaymentRequest bo'lmasa ham ishlaydi)
+            if ($order->type === 'wallet' && isset($order->user_id)) {
+                $user = User::find($order->user_id);
+                if ($user) {
+                    $amountInSum = $order->amount / 100;
+                    $user->wallet_balance = ($user->wallet_balance ?? 0) + $amountInSum;
+                    $user->save();
+
+                    Log::info('Payme Wallet Balance Updated (MySQL)', [
+                        'user_id'     => $user->id,
+                        'amount'      => $amountInSum,
+                        'new_balance' => $user->wallet_balance,
+                    ]);
+                }
             }
 
             DB::commit();
@@ -85,6 +82,10 @@ class PaymeHandler
                 'transaction_id' => $transaction->id,
                 'order_id' => $order->id
             ]);
+
+            // To'lovdan keyin custom logika ishga tushirish
+            $paidUser = isset($order->user_id) ? User::find($order->user_id) : null;
+            event(new PaymentSucceeded($order, $transaction, $paidUser));
 
         } catch (\Exception $e) {
             DB::rollBack();

@@ -217,3 +217,40 @@ Route::get('wallet-payme-success', [TransactionController::class, 'paymeSuccess'
 
 Route::post('/wallet-payme-link', [TransactionController::class, 'walletProcessPaymeLink'])
     ->name('wallet-payme-link');
+
+// FAQAT TEST UCHUN — productiondan o'chirib tashlang
+if (env('APP_ENV') === 'local') {
+    Route::post('/test-firebase-balance', function (\Illuminate\Http\Request $request) {
+        $phone  = $request->input('phone', '+998940014741');
+        $amount = (float) $request->input('amount', 1000);
+
+        $phoneWithPlus    = str_starts_with($phone, '+') ? $phone : '+' . $phone;
+        $phoneWithoutPlus = ltrim($phone, '+');
+
+        $user = \App\Models\User::where('email', $phoneWithPlus)
+            ->orWhere('email', $phoneWithoutPlus)->first();
+
+        if (!$user) {
+            return response()->json(['error' => 'User topilmadi: ' . $phoneWithPlus], 404);
+        }
+
+        $vendorUser = \App\Models\VendorUsers::where('user_id', $user->id)->first();
+        if (!$vendorUser || empty($vendorUser->uuid)) {
+            return response()->json([
+                'error'   => 'Firebase UID (vendor_users.uuid) topilmadi',
+                'user_id' => $user->id,
+            ], 404);
+        }
+
+        $firebaseUid = $vendorUser->uuid;
+        $firestore   = new \App\Services\FirestoreService();
+        $success     = $firestore->incrementField('users', $firebaseUid, 'balance', $amount);
+
+        return response()->json([
+            'success'      => $success,
+            'firebase_uid' => $firebaseUid,
+            'amount_added' => $amount,
+            'message'      => $success ? 'Firebase balance yangilandi!' : 'Xato! Logni tekshiring.',
+        ]);
+    });
+}

@@ -157,9 +157,23 @@ class PaymentStatusController extends Controller
                 ], 400);
             }
 
-            // Telefon orqali user topish
-            $user = \App\Models\User::where('email', $phone)->first();
-            
+            // Telefon orqali user topish (+998... yoki 998... ikkala format)
+            $phoneWithPlus    = str_starts_with($phone, '+') ? $phone : '+' . $phone;
+            $phoneWithoutPlus = ltrim($phone, '+');
+
+            $user = \App\Models\User::where('email', $phoneWithPlus)
+                ->orWhere('email', $phoneWithoutPlus)
+                ->first();
+
+            if (!$user) {
+                $vendorUser = \App\Models\VendorUsers::where('email', $phoneWithPlus)
+                    ->orWhere('email', $phoneWithoutPlus)
+                    ->first();
+                if ($vendorUser) {
+                    $user = \App\Models\User::find($vendorUser->user_id);
+                }
+            }
+
             if (!$user) {
                 return response()->json([
                     'success' => false,

@@ -22,7 +22,7 @@ class PaymeService
     public function generate_link($order)
     {
         $amount = $order->amount;
-        $url = "https://emart.felix-its.uz";
+        $url = Env::get("APP_URL", "https://emart.felix-its.uz");
         $payload = base64_encode("m=$this->merchant_id;ac.order_id=$order->id;a=$amount;c=$url");
         return $this->base_url . "/" . $payload;
     }
