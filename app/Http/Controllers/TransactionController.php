@@ -624,19 +624,17 @@ class TransactionController extends Controller
             'amount'            => 'required|numeric|min:1',
             'type'              => 'nullable|in:wallet,taxi,product',
             'firebase_order_id' => 'nullable|string',
+            'vendor_id'         => 'nullable|string',
+            'product_id'        => 'nullable|string',
+            'quantity'          => 'nullable|integer|min:1',
         ]);
 
-        // type → Firebase collection mapping
-        $collectionMap = [
-            'taxi'    => 'cab_booking_orders',
-            'product' => 'vendor_orders',
-        ];
-
-        $phone = $request->phone;
-        $type  = $request->input('type', 'wallet');
+        $phone            = $request->phone;
+        $type             = $request->input('type', 'wallet');
         $phoneWithPlus    = str_starts_with($phone, '+') ? $phone : '+' . $phone;
         $phoneWithoutPlus = ltrim($phone, '+');
 
+        // Laravel DB'dan user topish yoki yaratish
         $user = \App\Models\User::where('email', $phoneWithPlus)
             ->orWhere('email', $phoneWithoutPlus)
             ->first();
@@ -659,21 +657,75 @@ class TransactionController extends Controller
             ]);
         }
 
+        $firebaseOrderId   = null;
+        $firebaseCollection = null;
+
+        if ($type === 'product') {
+            // Product: Firebase'da order yaratamiz
+            $vendorId  = $request->vendor_id;
+            $productId = $request->product_id;
+            $quantity  = (int) $request->input('quantity', 1);
+
+            if (!$vendorId || !$productId) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'vendor_id va product_id majburiy (product uchun)',
+                ], 422);
+            }
+
+            $firestore = new \App\Services\FirestoreService();
+
+            // Firebase'dan user UID olish
+            $userUid  = $firestore->getUidByPhone($phone);
+            $userData = $userUid ? ($firestore->getUserByUid($userUid) ?? []) : [];
+
+            // Product ma'lumotlarini olish
+            $productData = $firestore->getDocument('vendor_products', $productId);
+            if (!$productData) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Firebase da product topilmadi: ' . $productId,
+                ], 404);
+            }
+
+            // Firebase'da vendor_orders document yaratish
+            $firebaseOrderId = $firestore->createVendorOrder(
+                $userUid ?? 'unknown',
+                $userData,
+                $vendorId,
+                $productData,
+                $quantity,
+                (float) $request->amount
+            );
+
+            if (!$firebaseOrderId) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Firebase order yaratishda xatolik',
+                ], 500);
+            }
+
+            $firebaseCollection = 'vendor_orders';
+
+        } elseif ($type === 'taxi') {
+            $firebaseOrderId = $request->firebase_order_id;
+            if (!$firebaseOrderId) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'firebase_order_id majburiy (taxi uchun)',
+                ], 422);
+            }
+            $firebaseCollection = 'cab_booking_orders';
+        }
+
         $order = new \JscorpTech\Payme\Models\Order();
         $order->user_id = $user->id;
         $order->amount  = (int) ($request->amount * 100); // so'm → tiyin
         $order->type    = $type;
 
-        if ($type !== 'wallet') {
-            $firebaseOrderId = $request->firebase_order_id;
-            if (!$firebaseOrderId) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'firebase_order_id majburiy (taxi va product uchun)',
-                ], 422);
-            }
+        if ($firebaseOrderId) {
             $order->firebase_order_id   = $firebaseOrderId;
-            $order->firebase_collection = $collectionMap[$type];
+            $order->firebase_collection = $firebaseCollection;
         }
 
         $order->save();
@@ -692,10 +744,11 @@ class TransactionController extends Controller
         $payme_link   = $paymeService->generate_link($order);
 
         return response()->json([
-            'status'   => true,
-            'link'     => $payme_link,
-            'order_id' => $order->id,
-            'type'     => $order->type,
+            'status'              => true,
+            'link'                => $payme_link,
+            'order_id'            => $order->id,
+            'type'                => $order->type,
+            'firebase_order_id'   => $order->firebase_order_id ?? null,
         ]);
     }
 
