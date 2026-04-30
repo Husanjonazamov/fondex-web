@@ -2,6 +2,7 @@
 
 namespace App\Handlers;
 
+use App\Events\OrderPaymentSucceeded;
 use App\Events\PaymentSucceeded;
 use App\Models\PaymentRequest;
 use App\Models\User;
@@ -83,9 +84,15 @@ class PaymeHandler
                 'order_id' => $order->id
             ]);
 
-            // To'lovdan keyin custom logika ishga tushirish
-            $paidUser = isset($order->user_id) ? User::find($order->user_id) : null;
-            event(new PaymentSucceeded($order, $transaction, $paidUser));
+            // To'lov turига qarab event yuborish
+            if ($order->type === 'wallet') {
+                // Wallet to'ldirilganda — Firebase wallet_amount yangilanadi
+                $paidUser = isset($order->user_id) ? User::find($order->user_id) : null;
+                event(new PaymentSucceeded($order, $transaction, $paidUser));
+            } else {
+                // Product / Taxi order to'lovi — Firebase orderni paid qilamiz
+                event(new OrderPaymentSucceeded($order, $transaction));
+            }
 
         } catch (\Exception $e) {
             DB::rollBack();

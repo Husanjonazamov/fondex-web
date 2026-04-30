@@ -620,33 +620,36 @@ class TransactionController extends Controller
     public function walletProcessPaymeLink(Request $request)
     {
         $request->validate([
-            'phone' => 'required|string',
-            'amount' => 'required|numeric|min:1',
+            'phone'             => 'required|string',
+            'amount'            => 'required|numeric|min:1',
+            'type'              => 'nullable|in:wallet,taxi,product',
+            'firebase_order_id' => 'nullable|string',
         ]);
 
-        // Telefon raqam orqali foydalanuvchini topamiz
-        $phone = $request->phone;
+        // type → Firebase collection mapping
+        $collectionMap = [
+            'taxi'    => 'cab_booking_orders',
+            'product' => 'vendor_orders',
+        ];
 
-        // +998... yoki 998... formatini normallashtirish
-        $phoneWithPlus = str_starts_with($phone, '+') ? $phone : '+' . $phone;
+        $phone = $request->phone;
+        $type  = $request->input('type', 'wallet');
+        $phoneWithPlus    = str_starts_with($phone, '+') ? $phone : '+' . $phone;
         $phoneWithoutPlus = ltrim($phone, '+');
 
         $user = \App\Models\User::where('email', $phoneWithPlus)
             ->orWhere('email', $phoneWithoutPlus)
             ->first();
 
-        // vendor_users jadvaldan ham qidiramiz
         if (!$user) {
             $vendorUser = \App\Models\VendorUsers::where('email', $phoneWithPlus)
                 ->orWhere('email', $phoneWithoutPlus)
                 ->first();
-
             if ($vendorUser) {
                 $user = \App\Models\User::find($vendorUser->user_id);
             }
         }
 
-        // Hali ham topilmasa, avtomatik yaratamiz
         if (!$user) {
             $user = \App\Models\User::create([
                 'name'     => $phoneWithPlus,
@@ -658,24 +661,41 @@ class TransactionController extends Controller
 
         $order = new \JscorpTech\Payme\Models\Order();
         $order->user_id = $user->id;
-        $order->amount = $request->amount * 100; 
+        $order->amount  = (int) ($request->amount * 100); // so'm → tiyin
+        $order->type    = $type;
+
+        if ($type !== 'wallet') {
+            $firebaseOrderId = $request->firebase_order_id;
+            if (!$firebaseOrderId) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'firebase_order_id majburiy (taxi va product uchun)',
+                ], 422);
+            }
+            $order->firebase_order_id   = $firebaseOrderId;
+            $order->firebase_collection = $collectionMap[$type];
+        }
+
         $order->save();
 
         Log::info('Yangi Payme order yaratildi', [
-            'order_id' => $order->id,
-            'user_id'  => $order->user_id,
-            'phone'    => $phone,
-            'amount'   => $order->amount,
+            'order_id'            => $order->id,
+            'type'                => $order->type,
+            'user_id'             => $order->user_id,
+            'phone'               => $phone,
+            'amount'              => $order->amount,
+            'firebase_order_id'   => $order->firebase_order_id ?? null,
+            'firebase_collection' => $order->firebase_collection ?? null,
         ]);
 
-        // Payme link generatsiya
         $paymeService = new \App\Services\PaymeService();
-        $payme_link = $paymeService->generate_link($order);
+        $payme_link   = $paymeService->generate_link($order);
 
         return response()->json([
-            'status' => true,
-            'link' => $payme_link,
-            'order_id' => $order->id
+            'status'   => true,
+            'link'     => $payme_link,
+            'order_id' => $order->id,
+            'type'     => $order->type,
         ]);
     }
 

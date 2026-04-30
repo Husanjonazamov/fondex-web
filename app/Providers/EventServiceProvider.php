@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Events\OrderPaymentSucceeded;
 use App\Events\PaymentSucceeded;
+use App\Listeners\OrderPaymentSucceededListener;
 use App\Listeners\PaymentSucceededListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -22,6 +24,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         PaymentSucceeded::class => [
             PaymentSucceededListener::class,
+        ],
+        OrderPaymentSucceeded::class => [
+            OrderPaymentSucceededListener::class,
         ],
     ];
 

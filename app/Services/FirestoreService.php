@@ -163,4 +163,69 @@ class FirestoreService
             return false;
         }
     }
+
+    /**
+     * Firebase Firestore da orderni "to'langan" deb belgilash
+     *
+     * @param string $collection   Masalan: "vendor_orders", "ondemand_orders"
+     * @param string $documentId   Firebase order document ID
+     */
+    public function markOrderAsPaid(string $collection, string $documentId): bool
+    {
+        $token = $this->getAccessToken();
+        if (!$token) {
+            return false;
+        }
+
+        // Har bir collection uchun to'g'ri maydon nomlari
+        if ($collection === 'cab_booking_orders') {
+            // Taxi: paymentStatus (boolean), paymentMethod (string)
+            $fields = [
+                'paymentStatus' => ['booleanValue' => true],
+                'paymentMethod' => ['stringValue'  => 'payme'],
+            ];
+            $mask = 'paymentStatus&updateMask.fieldPaths=paymentMethod';
+        } else {
+            // Product (vendor_orders) va boshqalar
+            $fields = [
+                'paymentStatus'  => ['booleanValue' => true],
+                'payment_method' => ['stringValue'  => 'payme'],
+            ];
+            $mask = 'paymentStatus&updateMask.fieldPaths=payment_method';
+        }
+
+        $url = "https://firestore.googleapis.com/v1/projects/{$this->projectId}/databases/(default)/documents/{$collection}/{$documentId}"
+             . "?updateMask.fieldPaths={$mask}";
+
+        $body = ['fields' => $fields];
+
+        try {
+            $client   = new Client(['timeout' => 10, 'connect_timeout' => 5]);
+            $response = $client->patch($url, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type'  => 'application/json',
+                ],
+                'json' => $body,
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                Log::info('FirestoreService: order to\'langan deb belgilandi', [
+                    'collection' => $collection,
+                    'order_id'   => $documentId,
+                ]);
+                return true;
+            }
+
+            return false;
+
+        } catch (\Exception $e) {
+            Log::error('FirestoreService: markOrderAsPaid xatosi', [
+                'collection' => $collection,
+                'order_id'   => $documentId,
+                'error'      => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
 }

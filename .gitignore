@@ -17,3 +17,4 @@ yarn-error.log
 # Documentation files
 *.md
 !README.md
+storage/app/firebase/credentials.json

@@ -218,6 +218,7 @@ Route::get('wallet-payme-success', [TransactionController::class, 'paymeSuccess'
 Route::post('/wallet-payme-link', [TransactionController::class, 'walletProcessPaymeLink'])
     ->name('wallet-payme-link');
 
+
 // FAQAT TEST UCHUN — productiondan o'chirib tashlang
 if (env('APP_ENV') === 'local') {
     Route::post('/test-firebase-balance', function (\Illuminate\Http\Request $request) {
