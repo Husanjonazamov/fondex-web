@@ -4,53 +4,55 @@ namespace App\Listeners;
 
 use App\Events\PaymentSucceeded;
 use App\Models\VendorUsers;
-use App\Services\FirebaseRTDBService;
+use App\Services\FirestoreService;
 use Illuminate\Support\Facades\Log;
 
 class PaymentSucceededListener
 {
     public function handle(PaymentSucceeded $event)
     {
-        $order       = $event->order;
-        $transaction = $event->transaction;
-        $user        = $event->user;
-
-        $amountInSum = $order->amount / 100; // tiyin → so'm
+        $order  = $event->order;
+        $user   = $event->user;
+        $amount = $order->amount / 100; // tiyin → so'm
 
         if (!$user) {
-            Log::warning('PaymentSucceeded: user topilmadi, Firebase skip', ['order_id' => $order->id]);
+            Log::warning('PaymentSucceeded: user topilmadi', ['order_id' => $order->id]);
             return;
         }
 
-        // Firebase UID ni vendor_users jadvalidan olamiz
-        $vendorUser = VendorUsers::where('user_id', $user->id)->first();
+        $phone     = $user->email;
+        $firestore = new FirestoreService();
 
-        if (!$vendorUser || empty($vendorUser->uuid)) {
-            Log::warning('PaymentSucceeded: Firebase UID (uuid) topilmadi', ['user_id' => $user->id]);
+        // 1. Firebase Auth dan telefon orqali UID topishga harakat
+        $uid = $firestore->getUidByPhone($phone);
+
+        // 2. Topilmasa — vendor_users.uuid dan olamiz (Flutter login da saqlanadi)
+        if (!$uid) {
+            Log::info('PaymentSucceeded: Auth da topilmadi, vendor_users.uuid ishlatilmoqda', ['phone' => $phone]);
+            $vendorUser = VendorUsers::where('user_id', $user->id)->first();
+            $uid = $vendorUser?->uuid;
+        }
+
+        if (!$uid) {
+            Log::error('PaymentSucceeded: Firebase UID hech qayerdan topilmadi', ['phone' => $phone, 'user_id' => $user->id]);
             return;
         }
 
-        $firebaseUid = $vendorUser->uuid;
-
-        Log::info('PaymentSucceeded: Firebase balance yangilanmoqda', [
-            'firebase_uid' => $firebaseUid,
-            'amount'       => $amountInSum,
+        Log::info('PaymentSucceeded: Firestore wallet_amount yangilanmoqda', [
+            'uid'    => $uid,
+            'phone'  => $phone,
+            'amount' => $amount,
         ]);
 
-        // Realtime Database: users/{uid}/balance maydonini oshirish
-        $rtdb    = new FirebaseRTDBService();
-        $success = $rtdb->increment("users/{$firebaseUid}/balance", $amountInSum);
+        $success = $firestore->incrementWalletAmount($uid, $amount);
 
         if ($success) {
-            Log::info('PaymentSucceeded: Firebase balance yangilandi', [
-                'firebase_uid' => $firebaseUid,
-                'added'        => $amountInSum,
+            Log::info('PaymentSucceeded: wallet_amount yangilandi', [
+                'uid'   => $uid,
+                'added' => $amount,
             ]);
         } else {
-            Log::error('PaymentSucceeded: Firebase balance yangilashda xato', [
-                'firebase_uid' => $firebaseUid,
-                'amount'       => $amountInSum,
-            ]);
+            Log::error('PaymentSucceeded: wallet_amount yangilashda xato', ['uid' => $uid]);
         }
     }
 }

@@ -5,68 +5,119 @@ namespace App\Services;
 use Google\Client as Google_Client;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class FirestoreService
 {
     private string $projectId;
-    private string $baseUrl;
+    private string $credentialsPath;
     private ?string $accessToken = null;
 
     public function __construct()
     {
-        $this->projectId = env('FIREBASE_PROJECT_ID');
-        $this->baseUrl   = "https://firestore.googleapis.com/v1/projects/{$this->projectId}/databases/(default)/documents";
+        $this->projectId       = env('FIREBASE_PROJECT_ID', '');
+        $this->credentialsPath = base_path(env('FIREBASE_CREDENTIALS', 'storage/app/firebase/credentials.json'));
     }
 
-    /**
-     * Firestore uchun Google OAuth2 access token olish
-     */
     private function getAccessToken(): ?string
     {
         if ($this->accessToken) {
             return $this->accessToken;
         }
 
-        $credentialsPath = storage_path('app/firebase/credentials.json');
-
-        if (!file_exists($credentialsPath)) {
-            Log::error('FirestoreService: credentials.json topilmadi', ['path' => $credentialsPath]);
+        if (!file_exists($this->credentialsPath)) {
+            Log::error('FirestoreService: credentials topilmadi', ['path' => $this->credentialsPath]);
             return null;
         }
 
         try {
             $client = new Google_Client();
-            $client->setAuthConfig($credentialsPath);
-            $client->addScope('https://www.googleapis.com/auth/datastore');
+            $client->setAuthConfig($this->credentialsPath);
+            $client->addScope('https://www.googleapis.com/auth/firebase');
+            $client->addScope('https://www.googleapis.com/auth/userinfo.email');
+            $client->addScope('https://www.googleapis.com/auth/cloud-platform');
             $client->refreshTokenWithAssertion();
             $token = $client->getAccessToken();
             $this->accessToken = $token['access_token'] ?? null;
             return $this->accessToken;
         } catch (\Exception $e) {
-            Log::error('FirestoreService: access token olishda xato', ['error' => $e->getMessage()]);
+            Log::error('FirestoreService: token xatosi', ['error' => $e->getMessage()]);
             return null;
         }
     }
 
     /**
-     * Firestore da mavjud hujjatning bitta maydonini atomik ko'paytirish (increment)
-     * Agar hujjat yoki maydon mavjud bo'lmasa ham ishlaydi
-     *
-     * @param string $collection   Masalan: "users"
-     * @param string $documentId   Masalan: Firebase UID
-     * @param string $field        Masalan: "balance"
-     * @param float  $amount       Qo'shiladigan miqdor
+     * Firestore users collectionidan telefon raqami orqali UID olish
+     * Telefon formatlari: "943015498", "+998943015498", "998943015498"
      */
-    public function incrementField(string $collection, string $documentId, string $field, float $amount): bool
+    public function getUidByPhone(string $phone): ?string
+    {
+        $token = $this->getAccessToken();
+        if (!$token) {
+            return null;
+        }
+
+        // Barcha mumkin bo'lgan formatlarni sinab ko'ramiz
+        $digits  = preg_replace('/\D/', '', $phone);          // 998943015498
+        $short   = preg_replace('/^998/', '', $digits);       // 943015498
+        $formats = array_unique([$short, $digits, '+' . $digits]);
+
+        $url    = "https://firestore.googleapis.com/v1/projects/{$this->projectId}/databases/(default)/documents:runQuery";
+        $client = new Client(['timeout' => 10, 'connect_timeout' => 5]);
+
+        foreach ($formats as $fmt) {
+            try {
+                $response = $client->post($url, [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $token,
+                        'Content-Type'  => 'application/json',
+                    ],
+                    'json' => [
+                        'structuredQuery' => [
+                            'from'  => [['collectionId' => 'users']],
+                            'where' => [
+                                'fieldFilter' => [
+                                    'field' => ['fieldPath' => 'phoneNumber'],
+                                    'op'    => 'EQUAL',
+                                    'value' => ['stringValue' => $fmt],
+                                ],
+                            ],
+                            'limit' => 1,
+                        ],
+                    ],
+                ]);
+
+                $results = json_decode($response->getBody()->getContents(), true);
+
+                foreach ($results as $result) {
+                    $name = $result['document']['name'] ?? null;
+                    if ($name) {
+                        $uid = basename($name);
+                        Log::info('FirestoreService: UID topildi', ['phone' => $fmt, 'uid' => $uid]);
+                        return $uid;
+                    }
+                }
+
+            } catch (\Exception $e) {
+                Log::warning('FirestoreService: getUidByPhone xatosi', ['fmt' => $fmt, 'error' => $e->getMessage()]);
+            }
+        }
+
+        Log::error('FirestoreService: Firestore da user topilmadi', ['phone' => $phone]);
+        return null;
+    }
+
+    /**
+     * Firestore da users/{uid}.wallet_amount ni atomik oshirish
+     */
+    public function incrementWalletAmount(string $uid, float $amount): bool
     {
         $token = $this->getAccessToken();
         if (!$token) {
             return false;
         }
 
-        $documentPath = "projects/{$this->projectId}/databases/(default)/documents/{$collection}/{$documentId}";
-        $url = "https://firestore.googleapis.com/v1/projects/{$this->projectId}/databases/(default)/documents:commit";
+        $documentPath = "projects/{$this->projectId}/databases/(default)/documents/users/{$uid}";
+        $url          = "https://firestore.googleapis.com/v1/projects/{$this->projectId}/databases/(default)/documents:commit";
 
         $body = [
             'writes' => [
@@ -75,7 +126,7 @@ class FirestoreService
                         'document'        => $documentPath,
                         'fieldTransforms' => [
                             [
-                                'fieldPath' => $field,
+                                'fieldPath' => 'wallet_amount',
                                 'increment' => ['doubleValue' => $amount],
                             ],
                         ],
@@ -85,7 +136,7 @@ class FirestoreService
         ];
 
         try {
-            $client = new Client(['timeout' => 10, 'connect_timeout' => 5]);
+            $client   = new Client(['timeout' => 10, 'connect_timeout' => 5]);
             $response = $client->post($url, [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $token,
@@ -94,25 +145,20 @@ class FirestoreService
                 'json' => $body,
             ]);
 
-            $statusCode = $response->getStatusCode();
-            if ($statusCode === 200) {
-                Log::info('FirestoreService: increment muvaffaqiyatli', [
-                    'collection' => $collection,
-                    'document'   => $documentId,
-                    'field'      => $field,
-                    'amount'     => $amount,
+            if ($response->getStatusCode() === 200) {
+                Log::info('FirestoreService: wallet_amount yangilandi', [
+                    'uid'    => $uid,
+                    'added'  => $amount,
                 ]);
                 return true;
             }
 
-            Log::warning('FirestoreService: kutilmagan status', ['status' => $statusCode]);
             return false;
 
         } catch (\Exception $e) {
-            Log::error('FirestoreService: increment xatosi', [
-                'collection' => $collection,
-                'document'   => $documentId,
-                'error'      => $e->getMessage(),
+            Log::error('FirestoreService: wallet_amount xatosi', [
+                'uid'   => $uid,
+                'error' => $e->getMessage(),
             ]);
             return false;
         }
