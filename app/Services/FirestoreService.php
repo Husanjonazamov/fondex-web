@@ -201,14 +201,14 @@ class FirestoreService
 
     /**
      * vendor_orders collectionida yangi order yaratish.
+     * $products = [['data' => [...firestore product fields...], 'quantity' => int], ...]
      * Qaytaradi: yaratilgan document ID yoki null
      */
     public function createVendorOrder(
         string $userUid,
         array  $userData,
         string $vendorId,
-        array  $productData,
-        int    $quantity,
+        array  $products,
         float  $amount
     ): ?string {
         $token = $this->getAccessToken();
@@ -217,25 +217,29 @@ class FirestoreService
         $orderId = (string) \Illuminate\Support\Str::uuid();
         $now     = now()->toIso8601ZuluString();
 
-        $productItem = $this->toFirestoreValue([
-            'id'            => $productData['id'] ?? '',
-            'name'          => $productData['name'] ?? '',
-            'photo'         => $productData['photo'] ?? '',
-            'price'         => (string) ($productData['price'] ?? $amount),
-            'discountPrice' => (string) ($productData['disPrice'] ?? '0'),
-            'quantity'      => $quantity,
-            'vendorID'      => $vendorId,
-            'extras'        => [],
-            'extras_price'  => '0',
-            'category_id'   => $productData['categoryID'] ?? '',
-            'variant_info'  => [
-                'variant_id'      => '',
-                'variant_price'   => '',
-                'variant_sku'     => '',
-                'variant_image'   => '',
-                'variant_options' => [],
-            ],
-        ]);
+        $productItems = array_map(function ($item) use ($vendorId) {
+            $productData = $item['data'];
+            $quantity    = $item['quantity'];
+            return $this->toFirestoreValue([
+                'id'            => $productData['id'] ?? '',
+                'name'          => $productData['name'] ?? '',
+                'photo'         => $productData['photo'] ?? '',
+                'price'         => (string) ($productData['price'] ?? '0'),
+                'discountPrice' => (string) ($productData['disPrice'] ?? '0'),
+                'quantity'      => $quantity,
+                'vendorID'      => $vendorId,
+                'extras'        => [],
+                'extras_price'  => '0',
+                'category_id'   => $productData['categoryID'] ?? '',
+                'variant_info'  => [
+                    'variant_id'      => '',
+                    'variant_price'   => '',
+                    'variant_sku'     => '',
+                    'variant_image'   => '',
+                    'variant_options' => [],
+                ],
+            ]);
+        }, $products);
 
         $authorValue = $this->toFirestoreValue([
             'id'                => $userUid,
@@ -256,7 +260,7 @@ class FirestoreService
                 'vendorID'           => ['stringValue'   => $vendorId],
                 'authorID'           => ['stringValue'   => $userUid],
                 'author'             => $authorValue,
-                'products'           => ['arrayValue' => ['values' => [$productItem]]],
+                'products'           => ['arrayValue' => ['values' => $productItems]],
                 'payment_method'     => ['stringValue'   => 'payme'],
                 'paymentStatus'      => ['booleanValue'  => false],
                 'status'             => ['stringValue'   => 'Order Placed'],
@@ -289,10 +293,11 @@ class FirestoreService
 
             if ($response->getStatusCode() === 200) {
                 Log::info('FirestoreService: vendor_orders yaratildi', [
-                    'order_id'  => $orderId,
-                    'user_uid'  => $userUid,
-                    'vendor_id' => $vendorId,
-                    'amount'    => $amount,
+                    'order_id'      => $orderId,
+                    'user_uid'      => $userUid,
+                    'vendor_id'     => $vendorId,
+                    'products_count' => count($products),
+                    'amount'        => $amount,
                 ]);
                 return $orderId;
             }

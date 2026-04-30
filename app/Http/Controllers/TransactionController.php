@@ -620,13 +620,14 @@ class TransactionController extends Controller
     public function walletProcessPaymeLink(Request $request)
     {
         $request->validate([
-            'phone'             => 'required|string',
-            'amount'            => 'required|numeric|min:1',
-            'type'              => 'nullable|in:wallet,taxi,product',
-            'firebase_order_id' => 'nullable|string',
-            'vendor_id'         => 'nullable|string',
-            'product_id'        => 'nullable|string',
-            'quantity'          => 'nullable|integer|min:1',
+            'phone'                    => 'required|string',
+            'amount'                   => 'required|numeric|min:1',
+            'type'                     => 'nullable|in:wallet,taxi,product',
+            'firebase_order_id'        => 'nullable|string',
+            'vendor_id'                => 'nullable|string',
+            'products'                 => 'nullable|array|min:1',
+            'products.*.product_id'    => 'required_with:products|string',
+            'products.*.quantity'      => 'nullable|integer|min:1',
         ]);
 
         $phone            = $request->phone;
@@ -661,40 +662,42 @@ class TransactionController extends Controller
         $firebaseCollection = null;
 
         if ($type === 'product') {
-            // Product: Firebase'da order yaratamiz
-            $vendorId  = $request->vendor_id;
-            $productId = $request->product_id;
-            $quantity  = (int) $request->input('quantity', 1);
+            $vendorId     = $request->vendor_id;
+            $productsList = $request->input('products', []);
 
-            if (!$vendorId || !$productId) {
+            if (!$vendorId || empty($productsList)) {
                 return response()->json([
                     'status'  => false,
-                    'message' => 'vendor_id va product_id majburiy (product uchun)',
+                    'message' => 'vendor_id va products[] majburiy (product uchun)',
                 ], 422);
             }
 
             $firestore = new \App\Services\FirestoreService();
 
-            // Firebase'dan user UID olish
             $userUid  = $firestore->getUidByPhone($phone);
             $userData = $userUid ? ($firestore->getUserByUid($userUid) ?? []) : [];
 
-            // Product ma'lumotlarini olish
-            $productData = $firestore->getDocument('vendor_products', $productId);
-            if (!$productData) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'Firebase da product topilmadi: ' . $productId,
-                ], 404);
+            // Har bir product uchun Firebase'dan ma'lumot olish
+            $products = [];
+            foreach ($productsList as $item) {
+                $productData = $firestore->getDocument('vendor_products', $item['product_id']);
+                if (!$productData) {
+                    return response()->json([
+                        'status'  => false,
+                        'message' => 'Firebase da product topilmadi: ' . $item['product_id'],
+                    ], 404);
+                }
+                $products[] = [
+                    'data'     => $productData,
+                    'quantity' => (int) ($item['quantity'] ?? 1),
+                ];
             }
 
-            // Firebase'da vendor_orders document yaratish
             $firebaseOrderId = $firestore->createVendorOrder(
                 $userUid ?? 'unknown',
                 $userData,
                 $vendorId,
-                $productData,
-                $quantity,
+                $products,
                 (float) $request->amount
             );
 
