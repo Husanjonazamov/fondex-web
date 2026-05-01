@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Payment_Methods\PaymeMerchantApiView;
 use App\Http\Controllers\PaymentStatusController;
+use App\Http\Controllers\TransactionController;
 
 
 /*
@@ -25,3 +26,4 @@ Route::post("payment/payme/callback/", PaymeMerchantApiView::class)->name("payme
 // To'lov statusini tekshirish API'lari (mobil dastur uchun)
 Route::post('/payment/check-status', [PaymentStatusController::class, 'checkPaymentStatus'])->name('payment.check-status');
 Route::post('/payment/user-payments', [PaymentStatusController::class, 'getUserPayments'])->name('payment.user-payments');
+Route::post('/wallet-payme-link', [TransactionController::class, 'walletProcessPaymeLink'])->name('api.wallet-payme-link');

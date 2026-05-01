@@ -644,164 +644,185 @@ class TransactionController extends Controller
     } 
     public function walletProcessPaymeLink(Request $request)
     {
-        $request->validate([
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'phone'                    => 'required|string',
             'amount'                   => 'required|numeric|min:1',
             'type'                     => 'nullable|in:wallet,taxi,product',
             'firebase_order_id'        => 'nullable|string',
             'vendor_id'                => 'nullable|string',
             'products'                 => 'nullable|array|min:1',
-            'products.*.product_id'    => 'required_with:products|string',
+            'products.*.product_id'    => 'required_with:products',
             'products.*.quantity'      => 'nullable|integer|min:1',
         ]);
 
-        $phone            = $request->phone;
-        $type             = $request->input('type', 'wallet');
-        $phoneWithPlus    = str_starts_with($phone, '+') ? $phone : '+' . $phone;
-        $phoneWithoutPlus = ltrim($phone, '+');
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Validation error',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
 
-        // Laravel DB'dan user topish yoki yaratish
-        $user = \App\Models\User::where('email', $phoneWithPlus)
-            ->orWhere('email', $phoneWithoutPlus)
-            ->first();
+        try {
+            $phone            = $request->phone;
+            $type             = $request->input('type', 'wallet');
+            $phoneWithPlus    = str_starts_with($phone, '+') ? $phone : '+' . $phone;
+            $phoneWithoutPlus = ltrim($phone, '+');
 
-        if (!$user) {
-            $vendorUser = \App\Models\VendorUsers::where('email', $phoneWithPlus)
+            // Laravel DB'dan user topish yoki yaratish
+            $user = \App\Models\User::where('email', $phoneWithPlus)
                 ->orWhere('email', $phoneWithoutPlus)
                 ->first();
-            if ($vendorUser) {
-                $user = \App\Models\User::find($vendorUser->user_id);
-            }
-        }
 
-        if (!$user) {
-            $user = \App\Models\User::create([
-                'name'     => $phoneWithPlus,
-                'email'    => $phoneWithPlus,
-                'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(16)),
-                'role'     => 'user',
-            ]);
-        }
-
-        $firebaseOrderId   = null;
-        $firebaseCollection = null;
-
-        if ($type === 'product') {
-            $vendorId     = $request->vendor_id;
-            $productsList = $request->input('products', []);
-
-            if (!$vendorId || empty($productsList)) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'vendor_id va products[] majburiy (product uchun)',
-                ], 422);
+            if (!$user) {
+                $vendorUser = \App\Models\VendorUsers::where('email', $phoneWithPlus)
+                    ->orWhere('email', $phoneWithoutPlus)
+                    ->first();
+                if ($vendorUser) {
+                    $user = \App\Models\User::find($vendorUser->user_id);
+                }
             }
 
-            $firestore = new \App\Services\FirestoreService();
+            if (!$user) {
+                $user = \App\Models\User::create([
+                    'name'     => $phoneWithPlus,
+                    'email'    => $phoneWithPlus,
+                    'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(16)),
+                    'role'     => 'user',
+                ]);
+            }
 
-            $userUid  = $firestore->getUidByPhone($phone);
-            $userData = $userUid ? ($firestore->getUserByUid($userUid) ?? []) : [];
+            $firebaseOrderId   = null;
+            $firebaseCollection = null;
 
-            // Har bir product uchun ma'lumot olish (Firebase → Django fallback)
-            $products = [];
-            foreach ($productsList as $item) {
-                $productId   = $item['product_id'];
-                $quantity    = (int) ($item['quantity'] ?? 1);
-                $productData = $firestore->getDocument('vendor_products', $productId);
+            if ($type === 'product') {
+                $vendorId     = $request->vendor_id;
+                $productsList = $request->input('products', []);
 
-                if (!$productData) {
-                    // Firebase da topilmadi — Django API dan qidiramiz (storage.fondex.uz)
-                    $django = $this->fetchDjangoProduct($productId);
-                    if (!$django) {
-                        return response()->json([
-                            'status'  => false,
-                            'message' => 'Product topilmadi: ' . $productId,
-                        ], 404);
-                    }
-
-                    // Django bergan firestore_id bilan Firebase dan qayta urinib ko'ramiz
-                    $firestoreId = $django['firestore_id'] ?? null;
-                    if ($firestoreId) {
-                        $productData = $firestore->getDocument('vendor_products', $firestoreId);
-                    }
-
-                    // Firebase da ham yo'q bo'lsa — Django ma'lumotini ishlatamiz
-                    if (!$productData) {
-                        $productData = [
-                            'id'         => $firestoreId ?? $productId,
-                            'name'       => $django['name'] ?? '',
-                            'photo'      => $django['image'] ?? '',
-                            'price'      => (string) ($django['price'] ?? '0'),
-                            'disPrice'   => (string) ($django['discount_price'] ?? '0'),
-                            'categoryID' => $django['category'] ?? '',
-                            'vendorID'   => $django['vendor'] ?? $vendorId,
-                        ];
-                    }
+                if (!$vendorId || empty($productsList)) {
+                    return response()->json([
+                        'status'  => false,
+                        'message' => 'vendor_id va products[] majburiy (product uchun)',
+                    ], 422);
                 }
 
-                $products[] = ['data' => $productData, 'quantity' => $quantity];
+                $firestore = new \App\Services\FirestoreService();
+
+                $userUid  = $firestore->getUidByPhone($phone);
+                $userData = $userUid ? ($firestore->getUserByUid($userUid) ?? []) : [];
+
+                // Har bir product uchun ma'lumot olish (Firebase -> Django fallback)
+                $products = [];
+                foreach ($productsList as $item) {
+                    $productId   = (string) $item['product_id'];
+                    $quantity    = (int) ($item['quantity'] ?? 1);
+                    $productData = $firestore->getDocument('vendor_products', $productId);
+
+                    if (!$productData) {
+                        // Firebase da topilmadi - Django API dan qidiramiz (storage.fondex.uz)
+                        $django = $this->fetchDjangoProduct($productId);
+                        if (!$django) {
+                            return response()->json([
+                                'status'  => false,
+                                'message' => 'Product topilmadi: ' . $productId,
+                            ], 404);
+                        }
+
+                        // Django bergan firestore_id bilan Firebase dan qayta urinib ko'ramiz
+                        $firestoreId = $django['firestore_id'] ?? null;
+                        if ($firestoreId) {
+                            $productData = $firestore->getDocument('vendor_products', $firestoreId);
+                        }
+
+                        // Firebase da ham yo'q bo'lsa - Django ma'lumotini ishlatamiz
+                        if (!$productData) {
+                            $productData = [
+                                'id'         => $firestoreId ?? $productId,
+                                'name'       => $django['name'] ?? '',
+                                'photo'      => $django['image'] ?? '',
+                                'price'      => (string) ($django['price'] ?? '0'),
+                                'disPrice'   => (string) ($django['discount_price'] ?? '0'),
+                                'categoryID' => $django['category'] ?? '',
+                                'vendorID'   => $django['vendor'] ?? $vendorId,
+                            ];
+                        }
+                    }
+
+                    $products[] = ['data' => $productData, 'quantity' => $quantity];
+                }
+
+                $firebaseOrderId = $firestore->createVendorOrder(
+                    $userUid ?? 'unknown',
+                    $userData,
+                    $vendorId,
+                    $products,
+                    (float) $request->amount
+                );
+
+                if (!$firebaseOrderId) {
+                    return response()->json([
+                        'status'  => false,
+                        'message' => 'Firebase order yaratishda xatolik',
+                    ], 500);
+                }
+
+                $firebaseCollection = 'vendor_orders';
+
+            } elseif ($type === 'taxi') {
+                $firebaseOrderId = $request->firebase_order_id;
+                if (!$firebaseOrderId) {
+                    return response()->json([
+                        'status'  => false,
+                        'message' => 'firebase_order_id majburiy (taxi uchun)',
+                    ], 422);
+                }
+                $firebaseCollection = 'cab_booking_orders';
             }
 
-            $firebaseOrderId = $firestore->createVendorOrder(
-                $userUid ?? 'unknown',
-                $userData,
-                $vendorId,
-                $products,
-                (float) $request->amount
-            );
+            $order = new \JscorpTech\Payme\Models\Order();
+            $order->user_id = $user->id;
+            $order->amount  = (int) ($request->amount * 100); // so'm -> tiyin
+            $order->type    = $type;
 
-            if (!$firebaseOrderId) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'Firebase order yaratishda xatolik',
-                ], 500);
+            if ($firebaseOrderId) {
+                $order->firebase_order_id   = $firebaseOrderId;
+                $order->firebase_collection = $firebaseCollection;
             }
 
-            $firebaseCollection = 'vendor_orders';
+            $order->save();
 
-        } elseif ($type === 'taxi') {
-            $firebaseOrderId = $request->firebase_order_id;
-            if (!$firebaseOrderId) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'firebase_order_id majburiy (taxi uchun)',
-                ], 422);
-            }
-            $firebaseCollection = 'cab_booking_orders';
+            Log::info('Yangi Payme order yaratildi', [
+                'order_id'            => $order->id,
+                'type'                => $order->type,
+                'user_id'             => $order->user_id,
+                'phone'               => $phone,
+                'amount'              => $order->amount,
+                'firebase_order_id'   => $order->firebase_order_id ?? null,
+                'firebase_collection' => $order->firebase_collection ?? null,
+            ]);
+
+            $paymeService = new \App\Services\PaymeService();
+            $payme_link   = $paymeService->generate_link($order);
+
+            return response()->json([
+                'status'              => true,
+                'link'                => $payme_link,
+                'order_id'            => $order->id,
+                'type'                => $order->type,
+                'firebase_order_id'   => $order->firebase_order_id ?? null,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('walletProcessPaymeLink xatosi', [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'status'  => false,
+                'message' => $e->getMessage(),
+            ], 500);
         }
-
-        $order = new \JscorpTech\Payme\Models\Order();
-        $order->user_id = $user->id;
-        $order->amount  = (int) ($request->amount * 100); // so'm → tiyin
-        $order->type    = $type;
-
-        if ($firebaseOrderId) {
-            $order->firebase_order_id   = $firebaseOrderId;
-            $order->firebase_collection = $firebaseCollection;
-        }
-
-        $order->save();
-
-        Log::info('Yangi Payme order yaratildi', [
-            'order_id'            => $order->id,
-            'type'                => $order->type,
-            'user_id'             => $order->user_id,
-            'phone'               => $phone,
-            'amount'              => $order->amount,
-            'firebase_order_id'   => $order->firebase_order_id ?? null,
-            'firebase_collection' => $order->firebase_collection ?? null,
-        ]);
-
-        $paymeService = new \App\Services\PaymeService();
-        $payme_link   = $paymeService->generate_link($order);
-
-        return response()->json([
-            'status'              => true,
-            'link'                => $payme_link,
-            'order_id'            => $order->id,
-            'type'                => $order->type,
-            'firebase_order_id'   => $order->firebase_order_id ?? null,
-        ]);
     }
 
 
