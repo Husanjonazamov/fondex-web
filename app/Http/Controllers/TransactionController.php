@@ -760,10 +760,25 @@ class TransactionController extends Controller
                 );
 
                 if (!$firebaseOrderId) {
-                    return response()->json([
+                    $firebaseError = $firestore->getLastError();
+                    Log::error('walletProcessPaymeLink: Firebase order yaratilmadi', [
+                        'phone'          => $phone,
+                        'vendor_id'      => $vendorId,
+                        'products_count' => count($products),
+                        'amount'         => (float) $request->amount,
+                        'firebase_error' => $firebaseError,
+                    ]);
+
+                    $response = [
                         'status'  => false,
                         'message' => 'Firebase order yaratishda xatolik',
-                    ], 500);
+                    ];
+
+                    if (config('app.debug') || $request->boolean('debug')) {
+                        $response['firebase_error'] = $firebaseError;
+                    }
+
+                    return response()->json($response, 500);
                 }
 
                 $firebaseCollection = 'vendor_orders';

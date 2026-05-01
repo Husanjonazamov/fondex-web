@@ -11,11 +11,17 @@ class FirestoreService
     private string $projectId;
     private string $credentialsPath;
     private ?string $accessToken = null;
+    private ?string $lastError = null;
 
     public function __construct()
     {
         $this->projectId       = env('FIREBASE_PROJECT_ID', '');
         $this->credentialsPath = base_path(env('FIREBASE_CREDENTIALS', 'storage/app/firebase/credentials.json'));
+    }
+
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
     }
 
     private function getAccessToken(): ?string
@@ -25,6 +31,7 @@ class FirestoreService
         }
 
         if (!file_exists($this->credentialsPath)) {
+            $this->lastError = 'Firebase credentials topilmadi: ' . $this->credentialsPath;
             Log::error('FirestoreService: credentials topilmadi', ['path' => $this->credentialsPath]);
             return null;
         }
@@ -40,6 +47,7 @@ class FirestoreService
             $this->accessToken = $token['access_token'] ?? null;
             return $this->accessToken;
         } catch (\Exception $e) {
+            $this->lastError = 'Firebase token xatosi: ' . $e->getMessage();
             Log::error('FirestoreService: token xatosi', ['error' => $e->getMessage()]);
             return null;
         }
@@ -211,8 +219,19 @@ class FirestoreService
         array  $products,
         float  $amount
     ): ?string {
+        $this->lastError = null;
+
+        if (!$this->projectId) {
+            $this->lastError = 'FIREBASE_PROJECT_ID sozlanmagan';
+            Log::error('FirestoreService: FIREBASE_PROJECT_ID sozlanmagan');
+            return null;
+        }
+
         $token = $this->getAccessToken();
-        if (!$token) return null;
+        if (!$token) {
+            $this->lastError = $this->lastError ?: 'Firebase access token olinmadi';
+            return null;
+        }
 
         $orderId = (string) \Illuminate\Support\Str::uuid();
         $now     = now()->toIso8601ZuluString();
@@ -306,10 +325,20 @@ class FirestoreService
                 'status' => $response->getStatusCode(),
                 'body'   => $response->getBody()->getContents(),
             ]);
+            $this->lastError = 'Firestore createVendorOrder status: ' . $response->getStatusCode();
             return null;
 
         } catch (\Exception $e) {
-            Log::error('FirestoreService: createVendorOrder xatosi', ['error' => $e->getMessage()]);
+            $responseBody = null;
+            if (method_exists($e, 'getResponse') && $e->getResponse()) {
+                $responseBody = (string) $e->getResponse()->getBody();
+            }
+
+            $this->lastError = 'Firestore createVendorOrder xatosi: ' . $e->getMessage();
+            Log::error('FirestoreService: createVendorOrder xatosi', [
+                'error' => $e->getMessage(),
+                'body'  => $responseBody,
+            ]);
             return null;
         }
     }
