@@ -348,6 +348,31 @@ class TransactionController extends Controller
         }
     }
 
+    private function fetchDjangoProduct(string $productId): ?array
+    {
+        $baseUrl = rtrim(env('STORAGE_API_URL', 'https://storage.fondex.uz/api'), '/');
+        $url     = "{$baseUrl}/products/{$productId}/";
+
+        try {
+            $client   = new Client(['timeout' => 8, 'connect_timeout' => 5, 'verify' => false]);
+            $response = $client->get($url);
+            $body     = json_decode($response->getBody()->getContents(), true);
+
+            $data = $body['data'] ?? $body ?? null;
+
+            Log::info('fetchDjangoProduct: topildi', [
+                'product_id'  => $productId,
+                'firestore_id' => $data['firestore_id'] ?? null,
+                'name'        => $data['name'] ?? null,
+            ]);
+
+            return $data;
+        } catch (\Exception $e) {
+            Log::warning('fetchDjangoProduct: topilmadi', ['product_id' => $productId, 'error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
     function generateSignature($data) {
         $getString = http_build_query($data, '', '&', PHP_QUERY_RFC3986);
         return md5( $getString );
@@ -677,20 +702,44 @@ class TransactionController extends Controller
             $userUid  = $firestore->getUidByPhone($phone);
             $userData = $userUid ? ($firestore->getUserByUid($userUid) ?? []) : [];
 
-            // Har bir product uchun Firebase'dan ma'lumot olish
+            // Har bir product uchun ma'lumot olish (Firebase → Django fallback)
             $products = [];
             foreach ($productsList as $item) {
-                $productData = $firestore->getDocument('vendor_products', $item['product_id']);
+                $productId   = $item['product_id'];
+                $quantity    = (int) ($item['quantity'] ?? 1);
+                $productData = $firestore->getDocument('vendor_products', $productId);
+
                 if (!$productData) {
-                    return response()->json([
-                        'status'  => false,
-                        'message' => 'Firebase da product topilmadi: ' . $item['product_id'],
-                    ], 404);
+                    // Firebase da topilmadi — Django API dan qidiramiz (storage.fondex.uz)
+                    $django = $this->fetchDjangoProduct($productId);
+                    if (!$django) {
+                        return response()->json([
+                            'status'  => false,
+                            'message' => 'Product topilmadi: ' . $productId,
+                        ], 404);
+                    }
+
+                    // Django bergan firestore_id bilan Firebase dan qayta urinib ko'ramiz
+                    $firestoreId = $django['firestore_id'] ?? null;
+                    if ($firestoreId) {
+                        $productData = $firestore->getDocument('vendor_products', $firestoreId);
+                    }
+
+                    // Firebase da ham yo'q bo'lsa — Django ma'lumotini ishlatamiz
+                    if (!$productData) {
+                        $productData = [
+                            'id'         => $firestoreId ?? $productId,
+                            'name'       => $django['name'] ?? '',
+                            'photo'      => $django['image'] ?? '',
+                            'price'      => (string) ($django['price'] ?? '0'),
+                            'disPrice'   => (string) ($django['discount_price'] ?? '0'),
+                            'categoryID' => $django['category'] ?? '',
+                            'vendorID'   => $django['vendor'] ?? $vendorId,
+                        ];
+                    }
                 }
-                $products[] = [
-                    'data'     => $productData,
-                    'quantity' => (int) ($item['quantity'] ?? 1),
-                ];
+
+                $products[] = ['data' => $productData, 'quantity' => $quantity];
             }
 
             $firebaseOrderId = $firestore->createVendorOrder(
