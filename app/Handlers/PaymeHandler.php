@@ -8,6 +8,7 @@ use App\Models\PaymentRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class PaymeHandler
 {
@@ -38,6 +39,8 @@ class PaymeHandler
                 'order_id' => $order->id,
                 'current_state' => $order->state
             ]);
+
+            $wasAlreadyPaid = (int) $order->state === 2;
             
             // Order holatini yangilash
             $order->state = 2; // To'langan (paid)
@@ -64,7 +67,7 @@ class PaymeHandler
             // MySQL wallet_balance yangilash (PaymentRequest bo'lmasa ham ishlaydi)
             if ($order->type === 'wallet' && isset($order->user_id)) {
                 $user = User::find($order->user_id);
-                if ($user) {
+                if ($user && Schema::hasColumn('users', 'wallet_balance')) {
                     $amountInSum = $order->amount / 100;
                     $user->wallet_balance = ($user->wallet_balance ?? 0) + $amountInSum;
                     $user->save();
@@ -73,6 +76,11 @@ class PaymeHandler
                         'user_id'     => $user->id,
                         'amount'      => $amountInSum,
                         'new_balance' => $user->wallet_balance,
+                    ]);
+                } elseif ($user) {
+                    Log::info('Payme Wallet Balance MySQL skip', [
+                        'user_id' => $user->id,
+                        'reason'  => 'users.wallet_balance ustuni yoq',
                     ]);
                 }
             }
@@ -85,7 +93,12 @@ class PaymeHandler
             ]);
 
             // To'lov turига qarab event yuborish
-            if ($order->type === 'wallet') {
+            if ($wasAlreadyPaid) {
+                Log::info('Payme Payment Success event skip', [
+                    'order_id' => $order->id,
+                    'reason'   => 'order allaqachon paid',
+                ]);
+            } elseif ($order->type === 'wallet') {
                 // Wallet to'ldirilganda — Firebase wallet_amount yangilanadi
                 $paidUser = isset($order->user_id) ? User::find($order->user_id) : null;
                 event(new PaymentSucceeded($order, $transaction, $paidUser));
@@ -135,7 +148,7 @@ class PaymeHandler
             // balansdan ayirish kerak (refund)
             if ($transaction->perform_time && $order->type === 'wallet' && isset($order->user_id)) {
                 $user = User::find($order->user_id);
-                if ($user) {
+                if ($user && Schema::hasColumn('users', 'wallet_balance')) {
                     $amountInSum = $order->amount / 100;
                     $user->wallet_balance = ($user->wallet_balance ?? 0) - $amountInSum;
                     $user->save();
@@ -144,6 +157,11 @@ class PaymeHandler
                         'user_id' => $user->id,
                         'amount' => $amountInSum,
                         'new_balance' => $user->wallet_balance
+                    ]);
+                } elseif ($user) {
+                    Log::info('Payme Wallet Balance Refund MySQL skip', [
+                        'user_id' => $user->id,
+                        'reason'  => 'users.wallet_balance ustuni yoq',
                     ]);
                 }
             }
