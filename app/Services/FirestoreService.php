@@ -119,12 +119,20 @@ class FirestoreService
      */
     public function incrementWalletAmount(string $uid, float $amount): bool
     {
+        return $this->incrementField('users', $uid, 'wallet_amount', $amount);
+    }
+
+    /**
+     * Firestore documentidagi numeric fieldni atomik oshirish.
+     */
+    public function incrementField(string $collection, string $documentId, string $field, float $amount): bool
+    {
         $token = $this->getAccessToken();
         if (!$token) {
             return false;
         }
 
-        $documentPath = "projects/{$this->projectId}/databases/(default)/documents/users/{$uid}";
+        $documentPath = "projects/{$this->projectId}/databases/(default)/documents/{$collection}/{$documentId}";
         $url          = "https://firestore.googleapis.com/v1/projects/{$this->projectId}/databases/(default)/documents:commit";
 
         $body = [
@@ -134,7 +142,7 @@ class FirestoreService
                         'document'        => $documentPath,
                         'fieldTransforms' => [
                             [
-                                'fieldPath' => 'wallet_amount',
+                                'fieldPath' => $field,
                                 'increment' => ['doubleValue' => $amount],
                             ],
                         ],
@@ -154,9 +162,11 @@ class FirestoreService
             ]);
 
             if ($response->getStatusCode() === 200) {
-                Log::info('FirestoreService: wallet_amount yangilandi', [
-                    'uid'    => $uid,
-                    'added'  => $amount,
+                Log::info('FirestoreService: field increment qilindi', [
+                    'collection' => $collection,
+                    'document'   => $documentId,
+                    'field'      => $field,
+                    'added'      => $amount,
                 ]);
                 return true;
             }
@@ -164,9 +174,11 @@ class FirestoreService
             return false;
 
         } catch (\Exception $e) {
-            Log::error('FirestoreService: wallet_amount xatosi', [
-                'uid'   => $uid,
-                'error' => $e->getMessage(),
+            Log::error('FirestoreService: incrementField xatosi', [
+                'collection' => $collection,
+                'document'   => $documentId,
+                'field'      => $field,
+                'error'      => $e->getMessage(),
             ]);
             return false;
         }
@@ -267,7 +279,9 @@ class FirestoreService
         array  $userData,
         string $vendorId,
         array  $products,
-        float  $amount
+        float  $amount,
+        float  $deliveryCharge = 0,
+        ?string $driverId = null
     ): ?string {
         $this->lastError = null;
 
@@ -359,7 +373,7 @@ class FirestoreService
                 'totalAmount'        => ['stringValue'   => (string) $amount],
                 'createdAt'          => ['timestampValue' => $now],
                 'discount'           => ['doubleValue'   => 0],
-                'deliveryCharge'     => ['stringValue'   => '0'],
+                'deliveryCharge'     => ['stringValue'   => (string) $deliveryCharge],
                 'tip_amount'         => ['stringValue'   => '0.0'],
                 'takeAway'           => ['booleanValue'  => false],
                 'notes'              => ['stringValue'   => ''],
@@ -379,6 +393,10 @@ class FirestoreService
                 'scheduleTime'       => ['nullValue'     => null],
             ],
         ];
+
+        if ($driverId) {
+            $body['fields']['driverId'] = ['stringValue' => $driverId];
+        }
 
         $url = "https://firestore.googleapis.com/v1/projects/{$this->projectId}/databases/(default)/documents/vendor_orders?documentId={$orderId}";
 
@@ -535,4 +553,5 @@ class FirestoreService
             return false;
         }
     }
+
 }

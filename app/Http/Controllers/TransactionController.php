@@ -650,6 +650,8 @@ class TransactionController extends Controller
             'type'                     => 'nullable|in:wallet,taxi,product',
             'firebase_order_id'        => 'nullable|string',
             'vendor_id'                => 'nullable|string',
+            'delivery_charge'          => 'nullable|numeric|min:0',
+            'driver_id'                => 'nullable|string',
             'products'                 => 'nullable|array|min:1',
             'products.*.product_id'    => 'required_with:products',
             'products.*.quantity'      => 'nullable|integer|min:1',
@@ -698,6 +700,8 @@ class TransactionController extends Controller
             if ($type === 'product') {
                 $vendorId     = $request->vendor_id;
                 $productsList = $request->input('products', []);
+                $deliveryCharge = (float) $request->input('delivery_charge', 0);
+                $driverId = $request->input('driver_id');
 
                 if (!$vendorId || empty($productsList)) {
                     return response()->json([
@@ -756,7 +760,9 @@ class TransactionController extends Controller
                     $userData,
                     $vendorId,
                     $products,
-                    (float) $request->amount
+                    (float) $request->amount,
+                    $deliveryCharge,
+                    $driverId
                 );
 
                 if (!$firebaseOrderId) {
@@ -766,6 +772,8 @@ class TransactionController extends Controller
                         'vendor_id'      => $vendorId,
                         'products_count' => count($products),
                         'amount'         => (float) $request->amount,
+                        'delivery_charge' => $deliveryCharge,
+                        'driver_id'       => $driverId,
                         'firebase_error' => $firebaseError,
                     ]);
 
