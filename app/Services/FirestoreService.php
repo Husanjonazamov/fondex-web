@@ -208,6 +208,56 @@ class FirestoreService
     }
 
     /**
+     * Firestore collection ichidan bitta string field bo'yicha document olish.
+     */
+    public function getFirstDocumentByField(string $collection, string $field, string $value): ?array
+    {
+        $token = $this->getAccessToken();
+        if (!$token) return null;
+
+        $url = "https://firestore.googleapis.com/v1/projects/{$this->projectId}/databases/(default)/documents:runQuery";
+
+        try {
+            $client   = new Client(['timeout' => 10, 'connect_timeout' => 5]);
+            $response = $client->post($url, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type'  => 'application/json',
+                ],
+                'json' => [
+                    'structuredQuery' => [
+                        'from'  => [['collectionId' => $collection]],
+                        'where' => [
+                            'fieldFilter' => [
+                                'field' => ['fieldPath' => $field],
+                                'op'    => 'EQUAL',
+                                'value' => ['stringValue' => $value],
+                            ],
+                        ],
+                        'limit' => 1,
+                    ],
+                ],
+            ]);
+
+            $results = json_decode($response->getBody()->getContents(), true);
+            foreach ($results as $result) {
+                if (isset($result['document']['fields'])) {
+                    return $this->decodeFirestoreFields($result['document']['fields']);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('FirestoreService: getFirstDocumentByField xatosi', [
+                'collection' => $collection,
+                'field'      => $field,
+                'value'      => $value,
+                'error'      => $e->getMessage(),
+            ]);
+        }
+
+        return null;
+    }
+
+    /**
      * vendor_orders collectionida yangi order yaratish.
      * $products = [['data' => [...firestore product fields...], 'quantity' => int], ...]
      * Qaytaradi: yaratilgan document ID yoki null
@@ -235,6 +285,9 @@ class FirestoreService
 
         $orderId = (string) \Illuminate\Support\Str::uuid();
         $now     = now()->toIso8601ZuluString();
+        $vendorData = $this->getDocument('vendors', $vendorId)
+            ?: $this->getFirstDocumentByField('vendors', 'id', $vendorId)
+            ?: ['id' => $vendorId];
 
         $productItems = array_map(function ($item) use ($vendorId) {
             $productData = $item['data'];
@@ -260,6 +313,13 @@ class FirestoreService
             ]);
         }, $products);
 
+        $firstProduct = $products[0]['data'] ?? [];
+        $sectionId = $firstProduct['section_id']
+            ?? $firstProduct['sectionId']
+            ?? $vendorData['section_id']
+            ?? $vendorData['sectionId']
+            ?? '';
+
         $authorValue = $this->toFirestoreValue([
             'id'                => $userUid,
             'firstName'         => $userData['firstName'] ?? ($userData['name'] ?? ''),
@@ -275,25 +335,47 @@ class FirestoreService
 
         $body = [
             'fields' => [
+                'address'            => $this->toFirestoreValue([
+                    'address'   => null,
+                    'addressAs' => null,
+                    'id'        => null,
+                    'isDefault' => null,
+                    'landmark'  => null,
+                    'locality'  => '',
+                    'location'  => [
+                        'latitude'  => 0.0,
+                        'longitude' => 0.0,
+                    ],
+                ]),
                 'id'                 => ['stringValue'   => $orderId],
                 'vendorID'           => ['stringValue'   => $vendorId],
                 'authorID'           => ['stringValue'   => $userUid],
                 'author'             => $authorValue,
+                'vendor'             => $this->toFirestoreValue($vendorData),
                 'products'           => ['arrayValue' => ['values' => $productItems]],
                 'payment_method'     => ['stringValue'   => 'payme'],
                 'paymentStatus'      => ['booleanValue'  => false],
                 'status'             => ['stringValue'   => 'Order Placed'],
                 'totalAmount'        => ['stringValue'   => (string) $amount],
                 'createdAt'          => ['timestampValue' => $now],
-                'discount'           => ['integerValue'  => '0'],
+                'discount'           => ['doubleValue'   => 0],
                 'deliveryCharge'     => ['stringValue'   => '0'],
                 'tip_amount'         => ['stringValue'   => '0.0'],
                 'takeAway'           => ['booleanValue'  => false],
                 'notes'              => ['stringValue'   => ''],
                 'adminCommission'    => ['stringValue'   => '0'],
                 'adminCommissionType' => ['stringValue'  => 'percentage'],
-                'couponCode'         => ['nullValue'     => null],
-                'couponId'           => ['nullValue'     => null],
+                'couponCode'         => ['stringValue'   => ''],
+                'couponId'           => ['stringValue'   => ''],
+                'taxSetting'         => ['arrayValue'    => ['values' => []]],
+                'tax_label'          => ['stringValue'   => ''],
+                'tax'                => ['stringValue'   => '0'],
+                'specialDiscount'    => $this->toFirestoreValue([
+                    'special_discount'       => 0.0,
+                    'specialType'            => '',
+                    'special_discount_label' => 0,
+                ]),
+                'section_id'         => ['stringValue'   => (string) $sectionId],
                 'scheduleTime'       => ['nullValue'     => null],
             ],
         ];
