@@ -361,9 +361,10 @@ class TransactionController extends Controller
             $data = $body['data'] ?? $body ?? null;
 
             Log::info('fetchDjangoProduct: topildi', [
-                'product_id'  => $productId,
+                'product_id'   => $productId,
                 'firestore_id' => $data['firestore_id'] ?? null,
-                'name'        => $data['name'] ?? null,
+                'name'         => $data['name'] ?? null,
+                'variants'     => count($data['variants'] ?? []),
             ]);
 
             return $data;
@@ -372,6 +373,7 @@ class TransactionController extends Controller
             return null;
         }
     }
+
 
     function generateSignature($data) {
         $getString = http_build_query($data, '', '&', PHP_QUERY_RFC3986);
@@ -645,16 +647,17 @@ class TransactionController extends Controller
     public function walletProcessPaymeLink(Request $request)
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-            'phone'                    => 'required|string',
-            'amount'                   => 'required|numeric|min:1',
-            'type'                     => 'nullable|in:wallet,taxi,product',
-            'firebase_order_id'        => 'nullable|string',
-            'vendor_id'                => 'nullable|string',
-            'delivery_charge'          => 'nullable|numeric|min:0',
-            'driver_id'                => 'nullable|string',
-            'products'                 => 'nullable|array|min:1',
-            'products.*.product_id'    => 'required_with:products',
-            'products.*.quantity'      => 'nullable|integer|min:1',
+            'phone'                      => 'required|string',
+            'amount'                     => 'required|numeric|min:1',
+            'type'                       => 'nullable|in:wallet,taxi,product',
+            'firebase_order_id'          => 'nullable|string',
+            'vendor_id'                  => 'nullable|string',
+            'delivery_charge'            => 'nullable|numeric|min:0',
+            'driver_id'                  => 'nullable|string',
+            'products'                   => 'nullable|array|min:1',
+            'products.*.product_id'      => 'required_with:products',
+            'products.*.quantity'        => 'nullable|integer|min:1',
+            'products.*.attribute_id'    => 'nullable',
         ]);
 
         if ($validator->fails()) {
@@ -698,10 +701,10 @@ class TransactionController extends Controller
             $firebaseCollection = null;
 
             if ($type === 'product') {
-                $vendorId     = $request->vendor_id;
-                $productsList = $request->input('products', []);
+                $vendorId       = $request->vendor_id;
+                $productsList   = $request->input('products', []);
                 $deliveryCharge = (float) $request->input('delivery_charge', 0);
-                $driverId = $request->input('driver_id');
+                $driverId       = $request->input('driver_id');
 
                 if (!$vendorId || empty($productsList)) {
                     return response()->json([
@@ -720,6 +723,8 @@ class TransactionController extends Controller
                 foreach ($productsList as $item) {
                     $productId   = (string) $item['product_id'];
                     $quantity    = (int) ($item['quantity'] ?? 1);
+                    $attributeId = isset($item['attribute_id']) ? (string) $item['attribute_id'] : null;
+                    $django      = null;
                     $productData = $firestore->getDocument('vendor_products', $productId);
 
                     if (!$productData) {
@@ -752,42 +757,24 @@ class TransactionController extends Controller
                         }
                     }
 
-                    $products[] = ['data' => $productData, 'quantity' => $quantity];
-                }
-
-                $firebaseOrderId = $firestore->createVendorOrder(
-                    $userUid ?? 'unknown',
-                    $userData,
-                    $vendorId,
-                    $products,
-                    (float) $request->amount,
-                    $deliveryCharge,
-                    $driverId
-                );
-
-                if (!$firebaseOrderId) {
-                    $firebaseError = $firestore->getLastError();
-                    Log::error('walletProcessPaymeLink: Firebase order yaratilmadi', [
-                        'phone'          => $phone,
-                        'vendor_id'      => $vendorId,
-                        'products_count' => count($products),
-                        'amount'         => (float) $request->amount,
-                        'delivery_charge' => $deliveryCharge,
-                        'driver_id'       => $driverId,
-                        'firebase_error' => $firebaseError,
-                    ]);
-
-                    $response = [
-                        'status'  => false,
-                        'message' => 'Firebase order yaratishda xatolik',
+                    $products[] = [
+                        'data'         => $productData,
+                        'quantity'     => $quantity,
+                        'attribute_id' => $attributeId,
                     ];
-
-                    if (config('app.debug') || $request->boolean('debug')) {
-                        $response['firebase_error'] = $firebaseError;
-                    }
-
-                    return response()->json($response, 500);
                 }
+
+                // Firebase order to'lovdan KEYIN yaratiladi (PaymeHandler::success da)
+                // Bu yerda faqat ma'lumotni saqlaymiz
+                $pendingOrderData = [
+                    'user_uid'        => $userUid ?? 'unknown',
+                    'user_data'       => $userData,
+                    'vendor_id'       => $vendorId,
+                    'products'        => $products,
+                    'amount'          => (float) $request->amount,
+                    'delivery_charge' => $deliveryCharge,
+                    'driver_id'       => $driverId,
+                ];
 
                 $firebaseCollection = 'vendor_orders';
 
@@ -807,7 +794,11 @@ class TransactionController extends Controller
             $order->amount  = (int) ($request->amount * 100); // so'm -> tiyin
             $order->type    = $type;
 
-            if ($firebaseOrderId) {
+            if ($type === 'product') {
+                // Firebase order to'lovdan keyin yaratiladi, shu sababli hozir faqat pending_order_data saqlanadi
+                $order->pending_order_data  = json_encode($pendingOrderData);
+                $order->firebase_collection = $firebaseCollection;
+            } elseif ($firebaseOrderId) {
                 $order->firebase_order_id   = $firebaseOrderId;
                 $order->firebase_collection = $firebaseCollection;
             }

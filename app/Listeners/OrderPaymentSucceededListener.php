@@ -10,46 +10,118 @@ class OrderPaymentSucceededListener
 {
     public function handle(OrderPaymentSucceeded $event)
     {
-        $order       = $event->order;
-        $collection  = $order->firebase_collection ?? null;
-        $firebaseId  = $order->firebase_order_id   ?? null;
+        $order      = $event->order;
+        $collection = $order->firebase_collection ?? null;
+        $firebaseId = $order->firebase_order_id   ?? null;
 
-        if (!$collection || !$firebaseId) {
-            Log::warning('OrderPaymentSucceeded: firebase_collection yoki firebase_order_id yo\'q', [
+        if (!$collection) {
+            Log::warning('OrderPaymentSucceeded: firebase_collection yo\'q', [
                 'payme_order_id' => $order->id,
             ]);
             return;
         }
 
-        Log::info('OrderPaymentSucceeded: Firebase order yangilanmoqda', [
-            'payme_order_id' => $order->id,
-            'collection'     => $collection,
-            'firebase_id'    => $firebaseId,
-            'amount'         => $order->amount / 100,
-        ]);
+        $firestore  = new FirestoreService();
+        $paidAmount = $order->amount / 100; // tiyin -> so'm
 
-        $firestore = new FirestoreService();
-        $success   = $firestore->markOrderAsPaid($collection, $firebaseId);
+        // product uchun Firebase order to'lovdan keyin yaratiladi
+        if ($collection === 'vendor_orders' && !$firebaseId) {
+            $firebaseId = $this->createFirebaseOrderFromPending($order, $firestore, $paidAmount);
+            if (!$firebaseId) {
+                return;
+            }
+        } else {
+            if (!$firebaseId) {
+                Log::warning('OrderPaymentSucceeded: firebase_order_id yo\'q', [
+                    'payme_order_id' => $order->id,
+                ]);
+                return;
+            }
 
-        if (!$success) {
-            Log::error('OrderPaymentSucceeded: Firebase order yangilashda xato', [
-                'collection' => $collection,
+            Log::info('OrderPaymentSucceeded: Firebase order yangilanmoqda', [
+                'payme_order_id' => $order->id,
+                'collection'     => $collection,
+                'firebase_id'    => $firebaseId,
+                'amount'         => $paidAmount,
+            ]);
+
+            $success = $firestore->markOrderAsPaid($collection, $firebaseId);
+
+            if (!$success) {
+                Log::error('OrderPaymentSucceeded: Firebase order yangilashda xato', [
+                    'collection'  => $collection,
+                    'firebase_id' => $firebaseId,
+                ]);
+                return;
+            }
+
+            Log::info('OrderPaymentSucceeded: Firebase order to\'langan deb belgilandi', [
+                'collection'  => $collection,
                 'firebase_id' => $firebaseId,
             ]);
-            return;
         }
 
-        Log::info('OrderPaymentSucceeded: Firebase order to\'langan deb belgilandi', [
-            'collection'  => $collection,
-            'firebase_id' => $firebaseId,
-        ]);
-
         if ($collection === 'vendor_orders') {
-            $this->handleVendorOrder($firestore, $firebaseId);
+            $this->handleVendorOrder($firestore, $firebaseId, $paidAmount);
         }
     }
 
-    private function handleVendorOrder(FirestoreService $firestore, string $firebaseId): void
+    private function createFirebaseOrderFromPending($order, FirestoreService $firestore, float $paidAmount): ?string
+    {
+        $rawData = $order->pending_order_data;
+        if (!$rawData) {
+            Log::error('OrderPaymentSucceeded: pending_order_data yo\'q', [
+                'payme_order_id' => $order->id,
+            ]);
+            return null;
+        }
+
+        $data = is_array($rawData) ? $rawData : json_decode($rawData, true);
+        if (!$data) {
+            Log::error('OrderPaymentSucceeded: pending_order_data parse xatosi', [
+                'payme_order_id' => $order->id,
+            ]);
+            return null;
+        }
+
+        Log::info('OrderPaymentSucceeded: Firebase vendor_order yaratilmoqda (to\'lovdan keyin)', [
+            'payme_order_id' => $order->id,
+            'vendor_id'      => $data['vendor_id'] ?? null,
+            'amount'         => $paidAmount,
+        ]);
+
+        $firebaseId = $firestore->createVendorOrder(
+            $data['user_uid']        ?? 'unknown',
+            $data['user_data']       ?? [],
+            $data['vendor_id']       ?? '',
+            $data['products']        ?? [],
+            $paidAmount,
+            (float) ($data['delivery_charge'] ?? 0),
+            $data['driver_id']       ?? null,
+            true // paymentStatus = true (to'lov allaqachon amalga oshirilgan)
+        );
+
+        if (!$firebaseId) {
+            Log::error('OrderPaymentSucceeded: Firebase vendor_order yaratilmadi', [
+                'payme_order_id' => $order->id,
+                'firebase_error' => $firestore->getLastError(),
+            ]);
+            return null;
+        }
+
+        // MySQL orderda firebase_order_id ni yangilaymiz
+        $order->firebase_order_id = $firebaseId;
+        $order->save();
+
+        Log::info('OrderPaymentSucceeded: Firebase vendor_order yaratildi', [
+            'payme_order_id' => $order->id,
+            'firebase_id'    => $firebaseId,
+        ]);
+
+        return $firebaseId;
+    }
+
+    private function handleVendorOrder(FirestoreService $firestore, string $firebaseId, float $paidAmount): void
     {
         $firebaseOrder = $firestore->getDocument('vendor_orders', $firebaseId);
 
@@ -60,19 +132,21 @@ class OrderPaymentSucceededListener
             return;
         }
 
-        // 1. Vendor balansini oshirish
-        $vendorUserId = $firebaseOrder['vendor']['author']
+        // 1. Vendor balansini oshirish — amount dan delivery_charge ayiriladi
+        $vendorUserId   = $firebaseOrder['vendor']['author']
             ?? $firebaseOrder['vendor']['authorID']
             ?? null;
-
-        $vendorAmount = $this->calculateProductsTotal($firebaseOrder['products'] ?? []);
+        $deliveryCharge = (float) ($firebaseOrder['deliveryCharge'] ?? 0);
+        $vendorAmount   = max(0, $paidAmount - $deliveryCharge);
 
         if ($vendorUserId && $vendorAmount > 0) {
             if ($firestore->incrementWalletAmount($vendorUserId, $vendorAmount)) {
                 Log::info('OrderPaymentSucceeded: vendor balance oshirildi', [
                     'firebase_id'    => $firebaseId,
                     'vendor_user_id' => $vendorUserId,
-                    'amount'         => $vendorAmount,
+                    'paid_amount'    => $paidAmount,
+                    'delivery'       => $deliveryCharge,
+                    'vendor_amount'  => $vendorAmount,
                 ]);
             }
         }
@@ -107,34 +181,9 @@ class OrderPaymentSucceededListener
         }
 
         Log::info('OrderPaymentSucceeded: courier balance alohida oshirilmadi', [
-            'firebase_id'     => $firebaseId,
-            'driver_id'       => $firebaseOrder['driverId'] ?? ($firebaseOrder['driver']['id'] ?? null),
-            'delivery_charge' => $firebaseOrder['deliveryCharge'] ?? 0,
-            'reason'          => 'mavjud courier flow ishlatadi',
+            'firebase_id' => $firebaseId,
+            'driver_id'   => $firebaseOrder['driverId'] ?? ($firebaseOrder['driver']['id'] ?? null),
+            'reason'      => 'mavjud courier flow ishlatadi',
         ]);
-    }
-
-    private function calculateProductsTotal(array $products): float
-    {
-        $total = 0;
-
-        foreach ($products as $product) {
-            $price       = $this->toFloat($product['price'] ?? 0);
-            $quantity    = (int) ($product['quantity'] ?? 1);
-            $extrasPrice = $this->toFloat($product['extras_price'] ?? 0);
-
-            $total += ($price * $quantity) + $extrasPrice;
-        }
-
-        return $total;
-    }
-
-    private function toFloat($value): float
-    {
-        if (is_numeric($value)) {
-            return (float) $value;
-        }
-
-        return 0.0;
     }
 }

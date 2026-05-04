@@ -282,7 +282,8 @@ class FirestoreService
         array  $products,
         float  $amount,
         float  $deliveryCharge = 0,
-        ?string $driverId = null
+        ?string $driverId = null,
+        bool $paymentStatus = false
     ): ?string {
         $this->lastError = null;
 
@@ -305,25 +306,32 @@ class FirestoreService
             ?: ['id' => $vendorId];
 
         $productItems = array_map(function ($item) use ($vendorId) {
-            $productData = $item['data'];
-            $quantity    = $item['quantity'];
+            $productData   = $item['data'];
+            $quantity      = $item['quantity'];
+            $attributeId   = $item['attribute_id'] ?? '';
+            $variantPrice  = (string) ($productData['price'] ?? '0');
+            $variantSku    = $productData['sku'] ?? '';
+            $variantImage  = $productData['variant_image'] ?? '';
+            $attributeData = $productData['attribute_data'] ?? [];
             return $this->toFirestoreValue([
-                'id'            => $productData['id'] ?? '',
-                'name'          => $productData['name'] ?? '',
-                'photo'         => $productData['photo'] ?? '',
-                'price'         => (string) ($productData['price'] ?? '0'),
-                'discountPrice' => (string) ($productData['disPrice'] ?? '0'),
-                'quantity'      => $quantity,
-                'vendorID'      => $vendorId,
-                'extras'        => [],
-                'extras_price'  => '0',
-                'category_id'   => $productData['categoryID'] ?? '',
-                'variant_info'  => [
-                    'variant_id'      => '',
-                    'variant_price'   => '',
-                    'variant_sku'     => '',
-                    'variant_image'   => '',
-                    'variant_options' => [],
+                'id'             => $productData['id'] ?? '',
+                'name'           => $productData['name'] ?? '',
+                'photo'          => $productData['photo'] ?? '',
+                'price'          => $variantPrice,
+                'discountPrice'  => (string) ($productData['disPrice'] ?? '0'),
+                'quantity'       => $quantity,
+                'vendorID'       => $vendorId,
+                'extras'         => [],
+                'extras_price'   => '0',
+                'category_id'    => $productData['categoryID'] ?? '',
+                'attribute_id'   => $attributeId,
+                'attribute_data' => $attributeData,
+                'variant_info'   => [
+                    'variant_id'      => $attributeId,
+                    'variant_price'   => $variantPrice,
+                    'variant_sku'     => $variantSku,
+                    'variant_image'   => $variantImage,
+                    'variant_options' => $attributeData,
                 ],
             ]);
         }, $products);
@@ -369,7 +377,7 @@ class FirestoreService
                 'vendor'             => $this->toFirestoreValue($vendorData),
                 'products'           => ['arrayValue' => ['values' => $productItems]],
                 'payment_method'     => ['stringValue'   => 'payme'],
-                'paymentStatus'      => ['booleanValue'  => false],
+                'paymentStatus'      => ['booleanValue'  => $paymentStatus],
                 'status'             => ['stringValue'   => 'Order Placed'],
                 'totalAmount'        => ['stringValue'   => (string) $amount],
                 'createdAt'          => ['timestampValue' => $now],
