@@ -40,6 +40,7 @@ class FirestoreService
             $client = new Google_Client();
             $client->setAuthConfig($this->credentialsPath);
             $client->addScope('https://www.googleapis.com/auth/firebase');
+            $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
             $client->addScope('https://www.googleapis.com/auth/userinfo.email');
             $client->addScope('https://www.googleapis.com/auth/cloud-platform');
             $client->refreshTokenWithAssertion();
@@ -550,6 +551,69 @@ class FirestoreService
                 'order_id'   => $documentId,
                 'error'      => $e->getMessage(),
             ]);
+            return false;
+        }
+    }
+
+    /**
+     * Firebase UID bo'yicha FCM notification yuborish
+     */
+    public function sendFcmNotification(string $uid, string $title, string $body): bool
+    {
+        $user = $this->getDocument('users', $uid);
+        $fcmToken = $user['fcmToken'] ?? null;
+
+        if (!$fcmToken) {
+            Log::warning('FirestoreService: FCM token topilmadi', ['uid' => $uid]);
+            return false;
+        }
+
+        return $this->sendFcmToToken($fcmToken, $title, $body);
+    }
+
+    /**
+     * FCM token ga to'g'ridan-to'g'ri notification yuborish
+     */
+    public function sendFcmToToken(string $fcmToken, string $title, string $body): bool
+    {
+        $token = $this->getAccessToken();
+        if (!$token) return false;
+
+        $url = "https://fcm.googleapis.com/v1/projects/{$this->projectId}/messages:send";
+
+        $data = [
+            'message' => [
+                'notification' => [
+                    'title' => $title,
+                    'body'  => $body,
+                ],
+                'data' => [
+                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                    'id'     => '1',
+                    'status' => 'done',
+                ],
+                'token' => $fcmToken,
+            ],
+        ];
+
+        try {
+            $client   = new Client(['timeout' => 10, 'connect_timeout' => 5]);
+            $response = $client->post($url, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type'  => 'application/json',
+                ],
+                'json' => $data,
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                Log::info('FirestoreService: FCM notification yuborildi', ['title' => $title, 'uid_or_token' => substr($fcmToken, 0, 20)]);
+                return true;
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            Log::error('FirestoreService: FCM notification xatosi', ['error' => $e->getMessage()]);
             return false;
         }
     }

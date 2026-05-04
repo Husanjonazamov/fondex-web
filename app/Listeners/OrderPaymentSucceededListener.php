@@ -11,10 +11,8 @@ class OrderPaymentSucceededListener
     public function handle(OrderPaymentSucceeded $event)
     {
         $order       = $event->order;
-        $transaction = $event->transaction;
-
-        $collection = $order->firebase_collection ?? null;
-        $firebaseId = $order->firebase_order_id   ?? null;
+        $collection  = $order->firebase_collection ?? null;
+        $firebaseId  = $order->firebase_order_id   ?? null;
 
         if (!$collection || !$firebaseId) {
             Log::warning('OrderPaymentSucceeded: firebase_collection yoki firebase_order_id yo\'q', [
@@ -33,26 +31,28 @@ class OrderPaymentSucceededListener
         $firestore = new FirestoreService();
         $success   = $firestore->markOrderAsPaid($collection, $firebaseId);
 
-        if ($success) {
-            Log::info('OrderPaymentSucceeded: Firebase order to\'langan deb belgilandi', [
-                'collection' => $collection,
-                'firebase_id' => $firebaseId,
-            ]);
-
-            if ($collection === 'vendor_orders') {
-                $this->creditProductOrderBalances($firestore, $firebaseId);
-            }
-        } else {
+        if (!$success) {
             Log::error('OrderPaymentSucceeded: Firebase order yangilashda xato', [
                 'collection' => $collection,
                 'firebase_id' => $firebaseId,
             ]);
+            return;
+        }
+
+        Log::info('OrderPaymentSucceeded: Firebase order to\'langan deb belgilandi', [
+            'collection'  => $collection,
+            'firebase_id' => $firebaseId,
+        ]);
+
+        if ($collection === 'vendor_orders') {
+            $this->handleVendorOrder($firestore, $firebaseId);
         }
     }
 
-    private function creditProductOrderBalances(FirestoreService $firestore, string $firebaseId): void
+    private function handleVendorOrder(FirestoreService $firestore, string $firebaseId): void
     {
         $firebaseOrder = $firestore->getDocument('vendor_orders', $firebaseId);
+
         if (!$firebaseOrder) {
             Log::error('OrderPaymentSucceeded: vendor_orders document topilmadi', [
                 'firebase_id' => $firebaseId,
@@ -60,6 +60,7 @@ class OrderPaymentSucceededListener
             return;
         }
 
+        // 1. Vendor balansini oshirish
         $vendorUserId = $firebaseOrder['vendor']['author']
             ?? $firebaseOrder['vendor']['authorID']
             ?? null;
@@ -69,11 +70,40 @@ class OrderPaymentSucceededListener
         if ($vendorUserId && $vendorAmount > 0) {
             if ($firestore->incrementWalletAmount($vendorUserId, $vendorAmount)) {
                 Log::info('OrderPaymentSucceeded: vendor balance oshirildi', [
-                    'firebase_id'   => $firebaseId,
+                    'firebase_id'    => $firebaseId,
                     'vendor_user_id' => $vendorUserId,
                     'amount'         => $vendorAmount,
                 ]);
             }
+        }
+
+        // 2. Vendorga FCM notification yuborish
+        if ($vendorUserId) {
+            $sent = $firestore->sendFcmNotification(
+                $vendorUserId,
+                'Yangi buyurtma!',
+                'Payme orqali yangi buyurtma keldi. Iltimos tekshiring.'
+            );
+            Log::info('OrderPaymentSucceeded: vendor notification', [
+                'firebase_id'    => $firebaseId,
+                'vendor_user_id' => $vendorUserId,
+                'sent'           => $sent,
+            ]);
+        }
+
+        // 3. Usrega FCM notification yuborish (to'lov tasdiqlandi)
+        $userUid = $firebaseOrder['authorID'] ?? ($firebaseOrder['author']['id'] ?? null);
+        if ($userUid && $userUid !== 'unknown') {
+            $sent = $firestore->sendFcmNotification(
+                $userUid,
+                'Buyurtma tasdiqlandi!',
+                'To\'lovingiz qabul qilindi va buyurtmangiz tasdiqlandi.'
+            );
+            Log::info('OrderPaymentSucceeded: user notification', [
+                'firebase_id' => $firebaseId,
+                'user_uid'    => $userUid,
+                'sent'        => $sent,
+            ]);
         }
 
         Log::info('OrderPaymentSucceeded: courier balance alohida oshirilmadi', [
@@ -89,8 +119,8 @@ class OrderPaymentSucceededListener
         $total = 0;
 
         foreach ($products as $product) {
-            $price = $this->toFloat($product['price'] ?? 0);
-            $quantity = (int) ($product['quantity'] ?? 1);
+            $price       = $this->toFloat($product['price'] ?? 0);
+            $quantity    = (int) ($product['quantity'] ?? 1);
             $extrasPrice = $this->toFloat($product['extras_price'] ?? 0);
 
             $total += ($price * $quantity) + $extrasPrice;

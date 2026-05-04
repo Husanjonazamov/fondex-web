@@ -50,8 +50,17 @@ class PaymeMerchantApiView extends PaymeApiView
                 throw new PaymeException($this->request_id, "Invalid amount", ErrorEnum::INVALID_AMOUNT);
             }
 
+            $orderType = $order->type ?? 'wallet';
+            if ($orderType === 'product') {
+                $itemTitle = "Product order";
+            } elseif ($orderType === 'taxi') {
+                $itemTitle = "Taxi service";
+            } else {
+                $itemTitle = "Wallet top-up";
+            }
+
             $items = [[
-                "title" => "Wallet top-up",
+                "title" => $itemTitle,
                 "price" => $expectedAmount,
                 "count" => 1,
                 "code" => env('PAYME_IKPU_CODE'),
