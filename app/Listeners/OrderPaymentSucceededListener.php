@@ -84,10 +84,28 @@ class OrderPaymentSucceededListener
             return null;
         }
 
+        $productPrices = array_map(function ($p) {
+            $d = $p['data'] ?? [];
+            return [
+                'name'     => $d['name'] ?? '',
+                'price'    => $d['price'] ?? '0',
+                'disPrice' => $d['disPrice'] ?? '0',
+                'qty'      => $p['quantity'] ?? 1,
+            ];
+        }, $data['products'] ?? []);
+
+        $latitude  = isset($data['latitude'])  ? (float) $data['latitude']  : null;
+        $longitude = isset($data['longitude']) ? (float) $data['longitude'] : null;
+
         Log::info('OrderPaymentSucceeded: Firebase vendor_order yaratilmoqda (to\'lovdan keyin)', [
-            'payme_order_id' => $order->id,
-            'vendor_id'      => $data['vendor_id'] ?? null,
-            'amount'         => $paidAmount,
+            'payme_order_id'           => $order->id,
+            'vendor_id'                => $data['vendor_id'] ?? null,
+            'totalAmount_soqm'         => $paidAmount,
+            'deliveryCharge_soqm'      => $data['delivery_charge'] ?? 0,
+            'payme_order_amount_tiyin' => $order->amount,
+            'latitude'                 => $latitude,
+            'longitude'                => $longitude,
+            'products_prices'          => $productPrices,
         ]);
 
         $firebaseId = $firestore->createVendorOrder(
@@ -98,7 +116,9 @@ class OrderPaymentSucceededListener
             $paidAmount,
             (float) ($data['delivery_charge'] ?? 0),
             $data['driver_id']       ?? null,
-            true // paymentStatus = true (to'lov allaqachon amalga oshirilgan)
+            true,
+            $latitude,
+            $longitude
         );
 
         if (!$firebaseId) {

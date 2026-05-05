@@ -654,6 +654,8 @@ class TransactionController extends Controller
             'vendor_id'                  => 'nullable|string',
             'delivery_charge'            => 'nullable|numeric|min:0',
             'driver_id'                  => 'nullable|string',
+            'latitude'                   => 'nullable|numeric',
+            'longitude'                  => 'nullable|numeric',
             'products'                   => 'nullable|array|min:1',
             'products.*.product_id'      => 'required_with:products',
             'products.*.quantity'        => 'nullable|integer|min:1',
@@ -774,6 +776,8 @@ class TransactionController extends Controller
                     'amount'          => (float) $request->amount,
                     'delivery_charge' => $deliveryCharge,
                     'driver_id'       => $driverId,
+                    'latitude'        => $request->latitude  !== null ? (float) $request->latitude  : null,
+                    'longitude'       => $request->longitude !== null ? (float) $request->longitude : null,
                 ];
 
                 $firebaseCollection = 'vendor_orders';

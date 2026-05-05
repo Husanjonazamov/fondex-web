@@ -283,7 +283,9 @@ class FirestoreService
         float  $amount,
         float  $deliveryCharge = 0,
         ?string $driverId = null,
-        bool $paymentStatus = false
+        bool $paymentStatus = false,
+        ?float $latitude = null,
+        ?float $longitude = null
     ): ?string {
         $this->lastError = null;
 
@@ -306,13 +308,33 @@ class FirestoreService
             ?: ['id' => $vendorId];
 
         $productItems = array_map(function ($item) use ($vendorId) {
-            $productData   = $item['data'];
-            $quantity      = $item['quantity'];
-            $attributeId   = $item['attribute_id'] ?? '';
-            $variantPrice  = (string) ($productData['price'] ?? '0');
-            $variantSku    = $productData['sku'] ?? '';
-            $variantImage  = $productData['variant_image'] ?? '';
-            $attributeData = $productData['attribute_data'] ?? [];
+            $productData  = $item['data'];
+            $quantity     = $item['quantity'];
+            $attributeId  = (string) ($item['attribute_id'] ?? '');
+
+            // item_attribute dan to'g'ri variantni topish
+            $itemAttribute  = $productData['item_attribute'] ?? [];
+            $variants        = $itemAttribute['variants'] ?? [];
+            $attributesDef   = $itemAttribute['attributes'] ?? [];
+
+            $matchedVariant = null;
+            foreach ($variants as $v) {
+                if (($v['variant_id'] ?? '') === $attributeId || ($v['variant_sku'] ?? '') === $attributeId) {
+                    $matchedVariant = $v;
+                    break;
+                }
+            }
+            // Agar moslik topilmasa va bitta variant bo'lsa — o'shani ishlatamiz
+            if (!$matchedVariant && count($variants) === 1) {
+                $matchedVariant = $variants[0];
+            }
+
+            $variantPrice   = $matchedVariant ? (string) ($matchedVariant['variant_price'] ?? $productData['price'] ?? '0')
+                                              : (string) ($productData['price'] ?? '0');
+            $variantSku     = $matchedVariant['variant_sku']   ?? '';
+            $variantImage   = $matchedVariant['variant_image']  ?? '';
+            $realVariantId  = $matchedVariant['variant_id']    ?? $attributeId;
+
             return $this->toFirestoreValue([
                 'id'             => $productData['id'] ?? '',
                 'name'           => $productData['name'] ?? '',
@@ -324,14 +346,14 @@ class FirestoreService
                 'extras'         => [],
                 'extras_price'   => '0',
                 'category_id'    => $productData['categoryID'] ?? '',
-                'attribute_id'   => $attributeId,
-                'attribute_data' => $attributeData,
+                'attribute_id'   => $realVariantId,
+                'attribute_data' => $attributesDef,
                 'variant_info'   => [
-                    'variant_id'      => $attributeId,
+                    'variant_id'      => $realVariantId,
                     'variant_price'   => $variantPrice,
                     'variant_sku'     => $variantSku,
                     'variant_image'   => $variantImage,
-                    'variant_options' => $attributeData,
+                    'variant_options' => $attributesDef,
                 ],
             ]);
         }, $products);
@@ -366,8 +388,8 @@ class FirestoreService
                     'landmark'  => null,
                     'locality'  => '',
                     'location'  => [
-                        'latitude'  => 0.0,
-                        'longitude' => 0.0,
+                        'latitude'  => $latitude  ?? 0.0,
+                        'longitude' => $longitude ?? 0.0,
                     ],
                 ]),
                 'id'                 => ['stringValue'   => $orderId],
@@ -409,6 +431,33 @@ class FirestoreService
 
         $url = "https://firestore.googleapis.com/v1/projects/{$this->projectId}/databases/(default)/documents/vendor_orders?documentId={$orderId}";
 
+        // Detailed log: Firebase ga nima saqlanayotganini ko'rsatish
+        $productSummary = array_map(function ($item) {
+            $d  = $item['data'] ?? [];
+            $ia = $d['item_attribute'] ?? [];
+            $vs = $ia['variants'] ?? [];
+            return [
+                'id'            => $d['id'] ?? '',
+                'name'          => $d['name'] ?? '',
+                'root_price'    => $d['price'] ?? '0',
+                'sent_attr_id'  => $item['attribute_id'] ?? '',
+                'variants_count' => count($vs),
+                'qty'           => $item['quantity'] ?? 1,
+            ];
+        }, $products);
+
+        Log::info('createVendorOrder: Firebase ga yuborilyapti', [
+            'firebase_order_id'    => $orderId,
+            'user_uid'             => $userUid,
+            'vendor_id'            => $vendorId,
+            'totalAmount_field'    => (string) $amount,
+            'deliveryCharge_field' => (string) $deliveryCharge,
+            'latitude'             => $latitude,
+            'longitude'            => $longitude,
+            'paymentStatus'        => $paymentStatus,
+            'products'             => $productSummary,
+        ]);
+
         try {
             $client   = new Client(['timeout' => 10, 'connect_timeout' => 5]);
             $response = $client->post($url, [
@@ -421,11 +470,12 @@ class FirestoreService
 
             if ($response->getStatusCode() === 200) {
                 Log::info('FirestoreService: vendor_orders yaratildi', [
-                    'order_id'      => $orderId,
-                    'user_uid'      => $userUid,
-                    'vendor_id'     => $vendorId,
-                    'products_count' => count($products),
-                    'amount'        => $amount,
+                    'order_id'           => $orderId,
+                    'user_uid'           => $userUid,
+                    'vendor_id'          => $vendorId,
+                    'products_count'     => count($products),
+                    'totalAmount'        => (string) $amount,
+                    'deliveryCharge'     => (string) $deliveryCharge,
                 ]);
                 return $orderId;
             }

@@ -33,7 +33,6 @@ use App\Http\Controllers\Payment_Methods\PaymeController;
 use Illuminate\Support\Facades\Route;
 
 
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
